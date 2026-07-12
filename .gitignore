@@ -1,27 +1,49 @@
-# Python
-__pycache__/
-*.py[cod]
-*.pyo
+# ==========================
+# Data files
+# ==========================
 
-# Jupyter
+data/raw/
+data/cache/
+data/processed/
+data/final/
+
+
+# Keep folder structure
+!data/raw/.gitkeep
+!data/cache/.gitkeep
+!data/processed/.gitkeep
+!data/final/.gitkeep
+
+
+# ==========================
+# Outputs
+# ==========================
+
+outputs/figures/
+outputs/tables/
+
+
+# ==========================
+# Python
+# ==========================
+
+__pycache__/
+*.pyc
+
 .ipynb_checkpoints/
 
-# Virtual environments
+
+# ==========================
+# Environment
+# ==========================
+
+.env
 .venv/
 venv/
-env/
 
-# Conda
-.conda/
 
-# VS Code
-.vscode/
+# ==========================
+# Mac
+# ==========================
 
-# macOS
 .DS_Store
-
-# Logs
-*.log
-
-# Temporary files
-*.tmp

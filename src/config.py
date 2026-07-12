@@ -1,36 +1,116 @@
 """
-Configurações e caminhos do projeto.
+Project configuration, directory structure, and central file paths.
+
+These constants are shared across notebooks and modules inside src/.
+
+Centralizing paths improves reproducibility and avoids hard-coded
+directories throughout the data processing pipeline.
 """
 
 from pathlib import Path
 
-# Diretório raiz do projeto
-BASE_DIR = Path(__file__).resolve().parents[1]
 
-# Pastas de dados
-RAW_DATA_DIR = BASE_DIR / "data" / "raw"
-PROCESSED_DATA_DIR = BASE_DIR / "data" / "processed"
-FINAL_DATA_DIR = BASE_DIR / "data" / "final"
+# =============================================================================
+# Project root
+# =============================================================================
 
-# Saídas
-OUTPUTS_DIR = BASE_DIR / "outputs"
-FIGURES_DIR = OUTPUTS_DIR / "figures"
+# Root directory of the project
+ROOT_DIR = Path(__file__).resolve().parents[1]
 
-# Modelos
-MODELS_DIR = BASE_DIR / "models" / "v1"
 
-MODEL_FILE = MODELS_DIR / "modelo_regressao_v1.pkl"
-METRICS_FILE = MODELS_DIR / "metricas_v1.json"
+# =============================================================================
+# Data directories
+# =============================================================================
 
-# Arquivo bruto baixado da API da WHO
-RAW_DATA_FILE = RAW_DATA_DIR / "who_health_inequality_data.xlsx"
+# Main data directory
+DATA_DIR = ROOT_DIR / "data"
 
-# Garante que as pastas existam
-for directory in [
+# Original datasets downloaded from the WHO HIDR API
+RAW_DATA_DIR = DATA_DIR / "raw"
+
+# Cached CSV files created after the first download
+CACHE_DIR = DATA_DIR / "cache"
+
+# Harmonized analytical dataset
+PROCESSED_DATA_DIR = DATA_DIR / "processed"
+
+# Final dataset after preprocessing
+FINAL_DATA_DIR = DATA_DIR / "final"
+
+
+# =============================================================================
+# Output directories
+# =============================================================================
+
+# Output folder
+OUTPUT_DIR = ROOT_DIR / "outputs"
+
+# Figures generated during EDA and model evaluation
+FIGURES_DIR = OUTPUT_DIR / "figures"
+
+# Tables generated throughout the analysis
+TABLES_DIR = OUTPUT_DIR / "tables"
+
+
+# =============================================================================
+# Model directories
+# =============================================================================
+
+# Root directory for trained models
+MODELS_DIR = ROOT_DIR / "models"
+
+# Versioned model directory
+MODEL_V1_DIR = MODELS_DIR / "v1"
+
+
+# =============================================================================
+# Standard file names
+# =============================================================================
+
+# Harmonized analytical dataset
+PROCESSED_DATA_FILE = (
+    PROCESSED_DATA_DIR /
+    "analytical_dataset.csv"
+)
+
+# Final dataset after preprocessing
+FINAL_DATA_FILE = (
+    FINAL_DATA_DIR /
+    "final_ml_dataset.csv"
+)
+
+# Trained machine learning model
+MODEL_FILE = (
+    MODEL_V1_DIR /
+    "linear_regression.joblib"
+)
+
+# Evaluation metrics
+METRICS_FILE = (
+    MODEL_V1_DIR /
+    "metrics.json"
+)
+
+
+# =============================================================================
+# Create project directories
+# =============================================================================
+
+for folder in [
+
     RAW_DATA_DIR,
+    CACHE_DIR,
     PROCESSED_DATA_DIR,
     FINAL_DATA_DIR,
+
     FIGURES_DIR,
+    TABLES_DIR,
+
     MODELS_DIR,
+    MODEL_V1_DIR,
+
 ]:
-    directory.mkdir(parents=True, exist_ok=True)
+    folder.mkdir(
+        parents=True,
+        exist_ok=True,
+    )
