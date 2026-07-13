@@ -285,7 +285,6 @@ def save_processed_dataset(
 
 
 
-
 def load_processed_dataset() -> pd.DataFrame:
     """
     Load the harmonized analytical dataset.
@@ -318,8 +317,28 @@ def load_processed_dataset() -> pd.DataFrame:
 
     return df
 
+# =============================================================================
+# Processed analytical dataset
+# =============================================================================
 
 
+from pathlib import Path
+
+PROCESSED_DIR = Path("data/processed")
+
+
+def save_processed_data(df, filename):
+    """
+    Save processed dataframe to the processed directory.
+    """
+
+    PROCESSED_DIR.mkdir(parents=True, exist_ok=True)
+
+    output_path = PROCESSED_DIR / filename
+
+    df.to_csv(output_path, index=False)
+
+    print(f"Processed dataset saved to: {output_path}")
 
 # =============================================================================
 # Final machine learning dataset
