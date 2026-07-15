@@ -521,6 +521,7 @@ def plot_country_completeness(
     filename: str,
     top_n: int = 15
 ) -> None:
+
     """
     Plot countries with highest and lowest data completeness.
 
@@ -588,6 +589,8 @@ def plot_country_completeness(
     _savefig(filename)
 
     plt.show()
+
+
 
 
 def plot_correlation_heatmap(

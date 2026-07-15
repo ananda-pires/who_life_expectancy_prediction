@@ -321,22 +321,30 @@ def load_processed_dataset() -> pd.DataFrame:
 # Processed analytical dataset
 # =============================================================================
 
-
 from pathlib import Path
 
 PROCESSED_DIR = Path("data/processed")
 
 
-def save_processed_data(df, filename):
+def save_processed_dataset(
+    df,
+    filename="model_df_clean.csv"
+):
     """
-    Save processed dataframe to the processed directory.
+    Save processed dataset.
     """
 
-    PROCESSED_DIR.mkdir(parents=True, exist_ok=True)
+    PROCESSED_DIR.mkdir(
+        parents=True,
+        exist_ok=True
+    )
 
     output_path = PROCESSED_DIR / filename
 
-    df.to_csv(output_path, index=False)
+    df.to_csv(
+        output_path,
+        index=False
+    )
 
     print(f"Processed dataset saved to: {output_path}")
 
