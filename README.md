@@ -2,107 +2,106 @@
 
 ## Project Overview
 
-This project develops an end-to-end machine learning pipeline to predict **life expectancy** using population-level health, socioeconomic, environmental, and behavioral indicators obtained from the **WHO Health Inequality Data Repository (HIDR)**.
+This project develops an end-to-end machine learning pipeline to predict **life expectancy** using global health inequality indicators from the **WHO Health Inequality Data Repository (HIDR)**.
 
-The main objective is to investigate whether multidimensional indicators related to education, healthcare access, disease management, environmental exposure, and lifestyle factors can accurately predict differences in life expectancy across countries and years.
+The objective is to investigate whether socioeconomic, healthcare, environmental, and behavioral indicators can accurately predict population-level life expectancy across countries and years.
 
-The project follows a complete machine learning workflow, including:
+The project follows a reproducible machine learning workflow including:
 
-* Automated dataset acquisition from WHO HIDR
-* Dataset harmonization and integration
-* Data quality assessment
-* Exploratory data analysis (EDA)
-* Feature selection
-* Feature engineering
-* Regression model development
-* Model comparison and validation
-* Final model training and versioning
+- Automated WHO HIDR dataset acquisition
+- Dataset harmonization and integration
+- Exploratory data analysis (EDA)
+- Feature selection
+- Feature engineering
+- Regression model development
+- Model evaluation and comparison
+- Cross-validation
+- Final model training and versioning
+
 
 ---
 
 # Research Question
 
-Can machine learning models predict life expectancy using global health inequality indicators from the WHO HIDR?
+**Can machine learning models predict life expectancy using multidimensional health inequality indicators from the WHO Health Inequality Data Repository?**
 
-The project evaluates whether health, socioeconomic, environmental, and behavioral indicators capture complex patterns associated with population longevity.
 
 ---
 
 # Dataset
 
-## Source
+## Data Source
 
-The data were obtained from the:
+The analytical dataset was constructed by integrating multiple thematic datasets from the WHO HIDR:
 
-**WHO Health Inequality Data Repository (HIDR)**
+- Life expectancy and mortality indicators
+- Healthcare system indicators
+- Noncommunicable disease indicators
+- Tobacco and alcohol indicators
+- Environmental health indicators
+- Water, sanitation and hygiene indicators
+- Development indicators
+- Multidimensional Poverty Index
 
-The repository provides internationally comparable health and social indicators across countries and years.
 
-Selected datasets include:
+## Analytical Unit
 
-* Life expectancy and mortality indicators
-* Health system indicators
-* Noncommunicable disease indicators
-* Tobacco and alcohol indicators
-* Environmental health indicators
-* Water, sanitation and hygiene indicators
-* Development indicators
-* Multidimensional poverty indicators
+The final analytical dataset consists of:
 
----
+- Country-year observations
+- Global population coverage
+- Time period: 2000–2022
 
-# Target Variable
 
-The prediction target is:
+## Target Variable
 
-```text
+The prediction target was:
+
+```
 life_expectancy
 ```
 
-representing the expected years of life at population level.
 
----
+## Predictor Variables
 
-# Predictor Variables
+The final model used the following predictors:
 
-The final modelling dataset includes indicators from multiple domains.
+### Education
 
-## Socioeconomic factors
+- Mean years of schooling
+- Expected years of schooling
 
-* Mean years of schooling
-* Expected years of schooling
-* Multidimensional Poverty Index
 
-## Healthcare factors
+### Healthcare
 
-* Diabetes treatment coverage
-* Hypertension treatment coverage
-* Medical doctors availability
+- Diabetes treatment coverage
+- Hypertension treatment coverage
 
-## Environmental factors
 
-* PM2.5 concentration
-* Polluting cooking fuels
-* Safe drinking water
-* Safe sanitation
+### Environmental
 
-## Behavioral and lifestyle factors
+- Polluting cooking fuels prevalence
 
-* Alcohol consumption
-* Tobacco use
-* Adult obesity prevalence
+
+### Behavioral and Lifestyle
+
+- Alcohol consumption
+- Adult obesity prevalence
+
 
 ---
 
 # Project Structure
 
-```text
+```
 who-life-expectancy_prediction/
 
+│
 ├── data/
-│   ├── raw/              # Original WHO datasets (not versioned)
-│   ├── cache/            # Cached downloads (not versioned)
-│   └── processed/        # Processed analytical datasets
+│   ├── raw/              # Original WHO HIDR datasets
+│   ├── cache/            # Cached downloaded datasets
+│   ├── processed/        # Intermediate analytical datasets
+│   └── final/            # Final modelling dataset
 │
 ├── models/
 │   └── v1/
@@ -114,7 +113,9 @@ who-life-expectancy_prediction/
 │   └── life_expectancy.ipynb
 │
 ├── outputs/
-│   └── figures/
+│   ├── figures/
+│   ├── tables/
+│   └── reports/
 │
 ├── src/
 │   ├── config.py
@@ -123,217 +124,198 @@ who-life-expectancy_prediction/
 │   ├── features.py
 │   ├── harmonization.py
 │   ├── plots.py
-│   │
 │   └── modeling/
-│       ├── __init__.py
 │       └── train.py
 │
 ├── requirements.txt
 └── README.md
+
 ```
+
 
 ---
 
-# Machine Learning Pipeline
+# Machine Learning Workflow
 
-## Phase 1 — Data Acquisition and Exploration
+## Phase 1 — Data Acquisition and Harmonization
 
-WHO HIDR datasets were downloaded using reusable functions implemented in:
+WHO HIDR datasets were downloaded using reusable data-loading functions.
 
-```text
-src/dataset.py
-```
+The pipeline included:
 
-The pipeline includes:
+- Dataset catalogue exploration
+- Automated dataset download
+- Local caching
+- Dataset quality assessment
+- Variable harmonization
+- Country-year dataset integration
 
-* Dataset catalog exploration
-* Automated download
-* Local caching
-* Dataset summaries
-* Data quality inspection
 
 ---
 
-## Phase 2 — Data Harmonization and Integration
+## Phase 2 — Exploratory Data Analysis
 
-Multiple WHO datasets were harmonized into a country-year analytical dataset.
+Exploratory analysis included:
 
-Processing steps included:
+- Missing data assessment
+- Indicator coverage analysis
+- Temporal coverage evaluation
+- Variable distributions
+- Correlation analysis
+- Outlier inspection
 
-* Standardization of indicator names
-* Country and year alignment
-* Dataset merging
-* Reshaping to analytical format
 
-Implemented in:
+Main findings:
 
-```text
-src/harmonization.py
-```
+- Education indicators showed strong positive associations with life expectancy.
+- Healthcare coverage indicators were strongly associated with improved life expectancy.
+- Environmental risk factors showed negative associations with life expectancy.
+
 
 ---
 
 ## Phase 3 — Feature Engineering
 
-Feature engineering focused on improving representation while avoiding redundancy.
+Feature engineering was performed to evaluate whether domain-based composite variables could improve prediction.
 
-Examples:
+Two engineered features were created:
 
-### Education Index
+- Education Index
+- Healthcare Index
 
-Combination of:
 
-* Mean years of schooling
-* Expected years of schooling
+The engineered features replaced highly correlated variables to reduce redundancy.
 
-### Healthcare Index
+However, the engineered representation did not improve predictive performance compared with the original predictors.
 
-Combination of:
 
-* Diabetes treatment coverage
-* Hypertension treatment coverage
+---
 
-Engineered features were evaluated as an alternative representation.
+## Phase 4 — Data Preparation
 
-Implemented in:
+The final modelling dataset was prepared using:
 
-```text
-src/features.py
+- Missing target removal
+- Predictor selection
+- Median imputation
+- Train-test splitting
+- Feature scaling
+
+
+Dataset split:
+
+```
+Training set: 80%
+Testing set: 20%
 ```
 
----
 
-# Exploratory Data Analysis
+Scaling method:
 
-The exploratory analysis evaluated:
-
-* Missing data patterns
-* Indicator coverage
-* Temporal availability
-* Predictor distributions
-* Correlations
-* Outliers
-* Predictor-target relationships
-
-Example analyses:
-
-* Life expectancy distribution
-* Education versus life expectancy
-* Healthcare coverage versus life expectancy
-* Environmental exposure versus life expectancy
-
-Figures are stored in:
-
-```text
-outputs/figures/
 ```
-
----
-
-# Model Development
-
-## Baseline Model
-
-The first model evaluated was:
-
-## Multiple Linear Regression
-
-The model was selected as a baseline because it provides:
-
-* High interpretability
-* Direct assessment of linear relationships
-* A benchmark for comparison
-
-Evaluation metrics:
-
-* Mean Absolute Error (MAE)
-* Mean Squared Error (MSE)
-* Root Mean Squared Error (RMSE)
-* Coefficient of Determination (R²)
-
----
-
-# Alternative Model
-
-## K-Nearest Neighbors Regression
-
-KNN regression was evaluated because life expectancy relationships may contain:
-
-* Non-linear patterns
-* Complex interactions
-* Similarity structures between countries and years
-
-Because KNN is distance-based, predictor variables were standardized using:
-
-```text
 StandardScaler
 ```
 
+
+The scaler was fitted only using training data to prevent data leakage.
+
+
 ---
 
-# Model Comparison
+# Phase 5 — Model Development and Evaluation
 
-The evaluated approaches were:
+Two regression algorithms were evaluated.
 
-| Model                      | Features            |
-| -------------------------- | ------------------- |
-| Multiple Linear Regression | Original predictors |
-| KNN Regression             | Original predictors |
-| KNN Regression             | Engineered features |
+
+## Baseline Model: Multiple Linear Regression
+
+Multiple Linear Regression was selected as the baseline model because it provides:
+
+- High interpretability
+- Simple implementation
+- A reference point for comparison
+
+
+## Candidate Model: K-Nearest Neighbors Regression
+
+KNN Regression was evaluated because:
+
+- It can capture non-linear relationships
+- It does not assume a predefined functional relationship between variables
+- It benefits from standardized predictors
+
+
+---
+
+# Model Performance
+
+## Test Set Evaluation (80/20 split)
+
+| Model | MAE | RMSE | R² |
+|---|---:|---:|---:|
+| Multiple Linear Regression | 2.96 | 3.99 | 0.79 |
+| K-Nearest Neighbors | 0.83 | 1.62 | 0.97 |
+
+
+KNN substantially improved prediction accuracy compared with the linear baseline.
+
+
+---
+
+# Cross-Validation Evaluation
+
+Five-fold cross-validation was performed to evaluate model stability across different data partitions.
+
+
+| Model | MAE | RMSE | R² |
+|---|---:|---:|---:|
+| Multiple Linear Regression | 2.97 ± 0.05 | 4.09 ± 0.07 | 0.78 ± 0.01 |
+| K-Nearest Neighbors | 0.84 ± 0.03 | 1.53 ± 0.08 | 0.97 ± 0.00 |
+
+
+The cross-validation results confirmed that KNN consistently outperformed Linear Regression.
+
 
 ---
 
 # Final Model Selection
 
-The final model was selected based on:
+The final model was selected considering:
 
-* Predictive accuracy
-* Generalization performance
-* Cross-validation stability
+- Predictive accuracy
+- Generalization performance
+- Cross-validation stability
+
 
 The selected model was:
 
-## KNN Regression using original predictor variables
-
-The model achieved:
-
-| Metric | Performance |
-| ------ | ----------: |
-| MAE    |  0.83 years |
-| RMSE   |  1.62 years |
-| R²     |        0.97 |
-
-The results indicate that the KNN model captured non-linear relationships between health, socioeconomic, environmental, and behavioral indicators more effectively than the linear baseline.
-
----
-
-# Cross-validation
-
-A 5-fold cross-validation strategy was applied to evaluate model robustness.
-
-The procedure:
-
-* Split data into five folds
-* Train and validate the model five times
-* Calculate mean and standard deviation of performance metrics
-
-Cross-validation confirmed the superiority of KNN compared with Linear Regression.
-
----
-
-# Model Versioning
-
-The final model was retrained using the complete modelling dataset.
-
-Version:
-
-```text
-v1
+```
+K-Nearest Neighbors Regression
 ```
 
-Saved artifacts:
 
-```text
+Final feature representation:
+
+```
+Original predictors
+```
+
+
+Although engineered features provided a more compact representation, they did not improve model performance.
+
+
+---
+
+# Phase 6 — Final Model Training and Versioning
+
+After evaluation, the selected model was retrained using the complete modelling dataset.
+
+The final model and preprocessing pipeline were saved for reproducible future predictions.
+
+
+Saved artefacts:
+
+```
 models/v1/
 
 ├── knn_model.joblib
@@ -341,78 +323,108 @@ models/v1/
 └── metrics.json
 ```
 
-The saved files allow future predictions without repeating model training.
+
+The metadata file contains:
+
+- Model version
+- Training date
+- Target variable
+- Predictor variables
+- Preprocessing method
+- Evaluation metrics
+
 
 ---
 
-# Reproducibility
+# Installation
 
-## Installation
+Clone the repository:
 
-Create a Python environment and install dependencies:
+```bash
+git clone https://github.com/ananda-pires/who-life-expectancy_prediction.git
+
+cd who-life-expectancy_prediction
+```
+
+
+Create the environment:
+
+```bash
+conda create -n life_expectancy python=3.12
+
+conda activate life_expectancy
+```
+
+
+Install dependencies:
 
 ```bash
 pip install -r requirements.txt
 ```
 
+
 ---
 
-## Running the Project
+# Running the Project
 
-The complete workflow can be reproduced using:
+Launch Jupyter Notebook:
 
-```text
+```bash
+jupyter notebook
+```
+
+
+Open:
+
+```
 notebooks/life_expectancy.ipynb
 ```
 
-The notebook executes:
+
+The notebook executes the complete workflow:
 
 1. Dataset loading
-2. Data preprocessing
+2. Harmonization
 3. Exploratory analysis
 4. Feature preparation
 5. Model training
 6. Evaluation
 7. Model versioning
 
+
+---
+
+# Limitations and Future Improvements
+
+Although KNN achieved excellent predictive performance, further validation is recommended.
+
+Future improvements include:
+
+- Country-based validation strategies
+- Temporal validation using future years as test data
+- Hyperparameter optimization
+- Comparison with tree-based algorithms
+- Explainable AI approaches such as SHAP
+
+
 ---
 
 # Technologies Used
 
-Python ecosystem:
+Programming language:
 
-* pandas
-* numpy
-* scikit-learn
-* matplotlib
-* seaborn
-* statsmodels
-* joblib
+- Python 3.12
 
-Development tools:
 
-* Git
-* GitHub
-* Jupyter Notebook
+Main libraries:
 
----
+- pandas
+- numpy
+- matplotlib
+- scikit-learn
+- statsmodels
+- joblib
 
-# Future Improvements
-
-Potential future extensions include:
-
-* Country-based cross-validation to evaluate generalization to unseen countries
-* Hyperparameter optimization for KNN
-* Comparison with tree-based models:
-
-  * Random Forest
-  * Gradient Boosting
-  * XGBoost
-* Explainable AI approaches:
-
-  * SHAP
-  * permutation importance
-* Temporal forecasting approaches
 
 ---
 
@@ -420,5 +432,5 @@ Potential future extensions include:
 
 Ananda Christina Staats Pires
 
-Machine Learning Project
+Machine Learning Project  
 WHO Health Inequality Data Repository (HIDR)
