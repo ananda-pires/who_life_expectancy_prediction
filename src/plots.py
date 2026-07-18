@@ -1004,6 +1004,127 @@ def plot_feature_importance(
 
 
 
+
+def plot_observed_vs_predicted(
+    observed,
+    predicted,
+    filename: str
+) -> None:
+    """
+    Plot observed versus predicted values.
+
+    Parameters
+    ----------
+    observed : array-like
+        True target values.
+
+    predicted : array-like
+        Model predictions.
+
+    filename : str
+        Output filename.
+    """
+
+    fig, ax = plt.subplots(
+        figsize=(7, 7)
+    )
+
+    ax.scatter(
+        observed,
+        predicted,
+        alpha=0.7
+    )
+
+    ax.plot(
+        [observed.min(), observed.max()],
+        [observed.min(), observed.max()],
+        linestyle="--",
+        linewidth=2,
+    )
+
+    ax.set_xlabel(
+        "Observed Life Expectancy (years)"
+    )
+
+    ax.set_ylabel(
+        "Predicted Life Expectancy (years)"
+    )
+
+    ax.set_title(
+        "Observed vs Predicted Life Expectancy"
+    )
+
+    plt.tight_layout()
+
+    _savefig(filename)
+
+    plt.show()
+
+
+def plot_residuals(
+    observed,
+    predicted,
+    filename: str
+) -> pd.Series:
+    """
+    Plot residuals versus predicted values.
+
+    Parameters
+    ----------
+    observed : array-like
+        True target values.
+
+    predicted : array-like
+        Model predictions.
+
+    filename : str
+        Output filename.
+
+    Returns
+    -------
+    pd.Series
+        Residuals (observed - predicted).
+    """
+
+    residuals = observed - predicted
+
+    fig, ax = plt.subplots(
+        figsize=(7, 6)
+    )
+
+    ax.scatter(
+        predicted,
+        residuals,
+        alpha=0.7
+    )
+
+    ax.axhline(
+        y=0,
+        linestyle="--",
+        linewidth=2
+    )
+
+    ax.set_xlabel(
+        "Predicted Life Expectancy (years)"
+    )
+
+    ax.set_ylabel(
+        "Residual (years)"
+    )
+
+    ax.set_title(
+        "Residuals vs Predicted Values"
+    )
+
+    plt.tight_layout()
+
+    _savefig(filename)
+
+    plt.show()
+
+    return residuals
+
+
 def plot_model_comparison(
     metrics_df: pd.DataFrame,
     metric: str,

@@ -2,57 +2,20 @@
 Feature engineering and data preparation utilities.
 
 Pipeline:
-1. Remove missing target values
-2. Impute missing predictor values
-3. Assess data coverage
-4. Summarize outliers
-5. Create engineered features
-6. Prepare modelling dataset
-7. Select final columns
+1. Summarize data coverage for predictors
+2. Remove missing target values
+3. Calculate temporal coverage for target and predictors
+4. Target missing values removal
+5. Impute missing predictor values
+6. Assess data coverage
+7. Summarize outliers
+8. Create engineered features
+9. Prepare modelling dataset
+10. Select final columns
 """
 
 import numpy as np
 import pandas as pd
-
-
-# =============================================================================
-# Remove missing values from target feature
-# =============================================================================
-
-def remove_missing_target(
-    df: pd.DataFrame,
-    target: str
-) -> pd.DataFrame:
-    """
-    Remove observations with missing target values.
-    """
-
-    return (
-        df
-        .dropna(subset=[target])
-        .reset_index(drop=True)
-    )
-
-# =============================================================================
-# Median imputation on missing values for predictors
-# =============================================================================
-
-def median_imputation(
-    df: pd.DataFrame,
-    predictors: list[str]
-) -> pd.DataFrame:
-    """
-    Impute missing predictor values using the median.
-    """
-
-    df = df.copy()
-
-    df[predictors] = (
-        df[predictors]
-        .fillna(df[predictors].median())
-    )
-
-    return df
 
 # =============================================================================
 # Summarize data coverage for predictors
@@ -132,6 +95,48 @@ def temporal_coverage(
         )
         .round(1)
     )
+
+
+# =============================================================================
+# Remove missing values from target feature
+# =============================================================================
+
+def remove_missing_target(
+    df: pd.DataFrame,
+    target: str
+) -> pd.DataFrame:
+    """
+    Remove observations with missing target values.
+    """
+
+    return (
+        df
+        .dropna(subset=[target])
+        .reset_index(drop=True)
+    )
+
+# =============================================================================
+# Median imputation on missing values for predictors
+# =============================================================================
+
+def median_imputation(
+    df: pd.DataFrame,
+    predictors: list[str]
+) -> pd.DataFrame:
+    """
+    Impute missing predictor values using the median.
+    """
+
+    df = df.copy()
+
+    df[predictors] = (
+        df[predictors]
+        .fillna(df[predictors].median())
+    )
+
+    return df
+
+
 # =============================================================================
 # Summarize outliers based on IQR method
 # =============================================================================

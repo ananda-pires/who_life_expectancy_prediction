@@ -1,40 +1,46 @@
 """
-Data harmonization utilities for the WHO HIDR project.
+Utilities for harmonizing WHO Health Inequality Data Repository (HIDR)
+datasets into a unified country-year analytical dataset.
 
-This module contains functions for:
+The harmonization workflow includes:
 
 - inspecting reporting dimensions;
 - aggregating subgroup estimates;
 - reshaping datasets from long to wide format;
-- merging multiple WHO datasets;
+- merging harmonized datasets;
 - standardizing variable names;
-- generating analytical dataset summaries.
+- summarizing dataset quality.
 
-The objective is to transform heterogeneous WHO HIDR datasets
-into a unified country-year analytical dataset suitable for
-exploratory analysis and machine learning.
+These utilities transform heterogeneous WHO HIDR datasets into a
+consistent analytical dataset suitable for exploratory analysis
+and machine learning.
 """
 
-
+from IPython.display import display
 import pandas as pd
 
+from src.config import WHO_COLUMN_MAPPING
 
 
 # =============================================================================
-# Inspect dataset dimensions
+# Inspect reporting dimensions
 # =============================================================================
-
 
 def inspect_reporting_dimensions(
-    selected_data: dict
+    selected_data: dict[str, pd.DataFrame],
 ) -> None:
     """
-    Inspect demographic and reporting dimensions of selected indicators.
+    Inspect reporting dimensions for each selected indicator.
 
-    This step identifies whether indicators are reported by
-    sex, age group, residence or other subgroups before aggregation.
+    WHO HIDR indicators may be reported across multiple demographic or
+    geographic subgroups (e.g., sex, age group, residence). This function
+    summarizes the reporting structure before subgroup aggregation.
+
+    Parameters
+    ----------
+    selected_data : dict[str, pandas.DataFrame]
+        Dictionary containing the selected WHO datasets.
     """
-
 
     for dataset_name, df in selected_data.items():
 
@@ -42,152 +48,134 @@ def inspect_reporting_dimensions(
         print(f"Dataset: {dataset_name}")
         print("=" * 90)
 
+        for indicator in sorted(df["indicator_name"].unique()):
 
-        for indicator in sorted(
-            df["indicator_name"].unique()
-        ):
-
-            print(
-                f"\nIndicator: {indicator}"
-            )
-
+            print(f"\nIndicator: {indicator}")
 
             summary = (
-                df[
+                df.loc[
                     df["indicator_name"] == indicator
                 ]
                 .groupby(
                     [
                         "dimension",
-                        "subgroup"
+                        "subgroup",
                     ],
-                    dropna=False
+                    dropna=False,
                 )
                 .size()
-                .reset_index(
-                    name="observations"
-                )
+                .reset_index(name="observations")
                 .sort_values(
                     "observations",
-                    ascending=False
+                    ascending=False,
                 )
             )
 
-
             display(summary)
-
 
 
 # =============================================================================
 # Aggregate subgroup estimates
 # =============================================================================
 
-
 def aggregate_subgroups(
-    selected_data: dict
-) -> tuple:
+    selected_data: dict[str, pd.DataFrame],
+) -> tuple[
+    dict[str, pd.DataFrame],
+    pd.DataFrame,
+]:
     """
-    Aggregate subgroup-specific estimates into country-year indicators.
+    Aggregate subgroup-specific estimates into country-year observations.
 
-    The WHO HIDR contains indicators reported for different
-    population subgroups. To construct a country-year dataset,
-    subgroup estimates are averaged.
+    Several WHO HIDR indicators are reported separately for demographic
+    or geographic subgroups. For modelling purposes, subgroup estimates
+    are averaged to obtain a single observation per country, year,
+    and indicator.
+
+    Parameters
+    ----------
+    selected_data : dict[str, pandas.DataFrame]
+        Dictionary containing selected WHO datasets.
 
     Returns
     -------
-    aggregated_data : dict
-        Aggregated datasets.
+    aggregated_data : dict[str, pandas.DataFrame]
+        Harmonized datasets after subgroup aggregation.
 
-    aggregation_summary : pd.DataFrame
-        Summary of observations before and after aggregation.
+    aggregation_summary : pandas.DataFrame
+        Summary comparing the number of observations before and after
+        aggregation.
     """
 
-
     aggregated_data = {}
-
     summaries = []
 
+    grouping_columns = [
+        "iso3",
+        "setting",
+        "date",
+        "indicator_name",
+    ]
 
     for dataset_name, df in selected_data.items():
 
-
-        # Aggregate subgroup estimates
         aggregated = (
             df.groupby(
-                [
-                    "iso3",
-                    "setting",
-                    "date",
-                    "indicator_name",
-                ],
-                as_index=False
+                grouping_columns,
+                as_index=False,
             )
             .agg(
                 estimate=(
                     "estimate",
-                    "mean"
+                    "mean",
                 )
             )
         )
 
-
         aggregated_data[dataset_name] = aggregated
 
-
-
-        # Compare observations before and after aggregation
-
         before = (
-            df.groupby(
-                "indicator_name"
-            )
+            df.groupby("indicator_name")
             .size()
             .reset_index(
                 name="observations_before"
             )
         )
 
-
         after = (
-            aggregated.groupby(
-                "indicator_name"
-            )
+            aggregated.groupby("indicator_name")
             .size()
             .reset_index(
                 name="observations_after"
             )
         )
 
-
         summary = before.merge(
             after,
-            on="indicator_name"
+            on="indicator_name",
         )
-
 
         summary["reduction_percent"] = (
             (
                 1
-                -
-                summary["observations_after"]
-                /
-                summary["observations_before"]
+                - summary["observations_after"]
+                / summary["observations_before"]
             )
             * 100
         ).round(1)
 
-
-        summary["dataset"] = dataset_name
-
+        summary.insert(
+            0,
+            "dataset",
+            dataset_name,
+        )
 
         summaries.append(summary)
-
-
 
     aggregation_summary = (
         pd.concat(
             summaries,
-            ignore_index=True
+            ignore_index=True,
         )
         [
             [
@@ -200,185 +188,133 @@ def aggregate_subgroups(
         ]
     )
 
-
     return (
         aggregated_data,
-        aggregation_summary
+        aggregation_summary,
     )
-
-
 
 # =============================================================================
 # Reshape datasets
 # =============================================================================
 
-
 def reshape_to_wide(
-    aggregated_data: dict
-) -> dict:
+    aggregated_data: dict[str, pd.DataFrame],
+) -> dict[str, pd.DataFrame]:
     """
-    Convert datasets from long to wide format.
+    Convert harmonized datasets from long to wide format.
 
-    Each row becomes a unique country-year observation.
-    Each indicator becomes a feature column.
+    Each output dataset contains one row per country-year observation,
+    while each indicator becomes a feature column.
+
+    Parameters
+    ----------
+    aggregated_data : dict[str, pandas.DataFrame]
+        Harmonized datasets after subgroup aggregation.
+
+    Returns
+    -------
+    dict[str, pandas.DataFrame]
+        Dictionary containing datasets in wide format.
     """
-
 
     wide_data = {}
 
+    index_columns = [
+        "iso3",
+        "setting",
+        "date",
+    ]
 
     for dataset_name, df in aggregated_data.items():
 
-
         wide = (
             df.pivot(
-                index=[
-                    "iso3",
-                    "setting",
-                    "date"
-                ],
+                index=index_columns,
                 columns="indicator_name",
-                values="estimate"
+                values="estimate",
             )
             .reset_index()
         )
 
-
         wide.columns.name = None
-
 
         wide_data[dataset_name] = wide
 
-
-
     return wide_data
-
 
 
 # =============================================================================
 # Merge datasets
 # =============================================================================
 
-
 def merge_datasets(
-    wide_data: dict
+    wide_data: dict[str, pd.DataFrame],
 ) -> pd.DataFrame:
     """
-    Merge all harmonized datasets into one analytical dataset.
+    Merge all harmonized datasets into a single analytical dataset.
 
-    Uses country, ISO3 and year as common identifiers.
+    Datasets are merged using ISO3 country code, setting and year as
+    common identifiers.
+
+    Parameters
+    ----------
+    wide_data : dict[str, pandas.DataFrame]
+        Dictionary containing harmonized datasets.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Integrated analytical dataset.
     """
-
 
     analytical_dataset = None
 
+    merge_keys = [
+        "iso3",
+        "setting",
+        "date",
+    ]
 
-    for dataset_name, df in wide_data.items():
-
+    for df in wide_data.values():
 
         if analytical_dataset is None:
 
             analytical_dataset = df.copy()
 
-
         else:
 
             analytical_dataset = analytical_dataset.merge(
                 df,
-                on=[
-                    "iso3",
-                    "setting",
-                    "date"
-                ],
-                how="outer"
+                on=merge_keys,
+                how="outer",
             )
 
-
     return analytical_dataset
-
 
 
 # =============================================================================
 # Standardize variable names
 # =============================================================================
 
-
 def rename_variables(
-    df: pd.DataFrame
+    df: pd.DataFrame,
 ) -> pd.DataFrame:
     """
-    Rename WHO indicator names into readable snake_case variables.
+    Rename WHO indicator names using standardized project variable names.
+
+    Parameters
+    ----------
+    df : pandas.DataFrame
+        Analytical dataset with original WHO indicator names.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Dataset with standardized snake_case variable names.
     """
 
-
-    column_mapping = {
-
-        # Target
-        "Life expectancy (years) ":
-            "life_expectancy",
-
-
-        # Education
-        "Expected years of schooling (children aged 6)":
-            "expected_years_schooling",
-
-        "Mean years of schooling (population aged 25+)":
-            "mean_years_schooling",
-
-
-        # Poverty
-        "Multidimensional Poverty Index":
-            "mpi",
-
-
-        # Environment
-        "Concentrations of fine particulate matter (PM2.5)":
-            "pm25",
-
-        "Population with primary reliance on polluting fuels and technologies for cooking (%)":
-            "polluting_cooking_fuels",
-
-
-        # WASH
-        "Population using safely managed drinking water services (%)":
-            "safe_drinking_water",
-
-        "Population using safely managed sanitation services (%)":
-            "safe_sanitation",
-
-
-        # Alcohol
-        "Alcohol, consumers in past 12 months (age-standardized) (%)":
-            "alcohol_consumers",
-
-        "Alcohol, per capita consumption (15+ years, among drinkers only) (in litres of pure alcohol)":
-            "alcohol_consumption",
-
-
-        # Tobacco
-        "Tobacco, current tobacco use prevalence (model-based estimates, age-standardized) (%)":
-            "tobacco_use",
-
-
-        # NCD
-        "Obesity prevalence among adults, BMI>=30 (age-standardized) (%)":
-            "obesity_prevalence",
-
-
-        # Healthcare
-        "Medical doctors (%)":
-            "medical_doctors",
-
-        "Diabetes treatment coverage (30+ years) (age-standardized) (%)":
-            "diabetes_treatment",
-
-        "Hypertension treatment coverage among adults aged 30-79 with hypertension (age-standardized) (%)":
-            "hypertension_treatment",
-    }
-
-
     return df.rename(
-        columns=column_mapping
+        columns=WHO_COLUMN_MAPPING
     )
 
 
@@ -386,34 +322,65 @@ def rename_variables(
 # Dataset quality summary
 # =============================================================================
 
-
 def dataset_quality_summary(
-    df: pd.DataFrame
+    df: pd.DataFrame,
 ) -> pd.DataFrame:
     """
-    Generate basic analytical dataset quality information.
+    Generate a summary describing the analytical dataset.
+
+    The summary provides basic structural information that helps
+    verify the dataset after harmonization.
+
+    Parameters
+    ----------
+    df : pandas.DataFrame
+        Harmonized analytical dataset.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Dataset quality summary.
     """
 
+    total_cells = df.shape[0] * df.shape[1]
+
+    missing_values = df.isna().sum().sum()
 
     summary = pd.DataFrame(
         {
-            "rows": [
+            "Rows": [
                 df.shape[0]
             ],
-
-            "columns": [
+            "Columns": [
                 df.shape[1]
             ],
-
-            "countries": [
+            "Countries": [
                 df["iso3"].nunique()
             ],
-
-            "years": [
+            "Years": [
                 df["date"].nunique()
+            ],
+            "Missing values": [
+                missing_values
+            ],
+            "Missing (%)": [
+                round(
+                    missing_values /
+                    total_cells *
+                    100,
+                    2,
+                )
+            ],
+            "Memory (MB)": [
+                round(
+                    df.memory_usage(
+                        deep=True
+                    ).sum()
+                    / 1024**2,
+                    2,
+                )
             ],
         }
     )
-
 
     return summary
