@@ -50,6 +50,8 @@ The final analytical dataset consists of:
 
 - Country-year observations
 - Global population coverage
+- 6,927 country-year observations
+- 18 harmonized indicators
 - Time period: 2000–2022
 
 
@@ -57,7 +59,7 @@ The final analytical dataset consists of:
 
 The prediction target was:
 
-```
+```text
 life_expectancy
 ```
 
@@ -65,6 +67,7 @@ life_expectancy
 ## Predictor Variables
 
 The final model used the following predictors:
+
 
 ### Education
 
@@ -262,6 +265,19 @@ KNN substantially improved prediction accuracy compared with the linear baseline
 
 ---
 
+# Training vs Testing Performance — Final KNN Model
+
+| Dataset | MAE | RMSE | R² |
+|---|---:|---:|---:|
+| Training | 0.58 | 1.12 | 0.98 |
+| Testing | 0.83 | 1.62 | 0.97 |
+
+
+The small difference between training and testing performance indicates good generalization without evidence of substantial overfitting.
+
+
+---
+
 # Cross-Validation Evaluation
 
 Five-fold cross-validation was performed to evaluate model stability across different data partitions.
@@ -273,7 +289,7 @@ Five-fold cross-validation was performed to evaluate model stability across diff
 | K-Nearest Neighbors | 0.84 ± 0.03 | 1.53 ± 0.08 | 0.97 ± 0.00 |
 
 
-The cross-validation results confirmed that KNN consistently outperformed Linear Regression.
+The cross-validation results confirmed that KNN consistently outperformed Linear Regression across different validation folds.
 
 
 ---
@@ -289,14 +305,14 @@ The final model was selected considering:
 
 The selected model was:
 
-```
+```text
 K-Nearest Neighbors Regression
 ```
 
 
 Final feature representation:
 
-```
+```text
 Original predictors
 ```
 
@@ -308,9 +324,11 @@ Although engineered features provided a more compact representation, they did no
 
 # Phase 6 — Final Model Training and Versioning
 
-After evaluation, the selected model was retrained using the complete modelling dataset.
+After unbiased evaluation using the 80/20 train-test split and five-fold cross-validation, the selected model was retrained using 100% of the available modelling dataset.
 
 The final model and preprocessing pipeline were saved for reproducible future predictions.
+
+The reported evaluation metrics correspond to the independent test set and cross-validation results obtained before final retraining.
 
 
 Saved artefacts:
@@ -332,6 +350,23 @@ The metadata file contains:
 - Predictor variables
 - Preprocessing method
 - Evaluation metrics
+
+
+---
+
+# Reproducibility
+
+The project follows a modular structure separating:
+
+- Data acquisition and caching (`src/dataset.py`)
+- Dataset harmonization (`src/harmonization.py`)
+- Feature engineering (`src/features.py`)
+- Visualization (`src/plots.py`)
+- Model persistence and versioning (`src/modeling/train.py`)
+- Configuration management (`src/config.py`)
+
+
+This structure allows the complete pipeline to be reproduced without manually downloading or processing datasets.
 
 
 ---
@@ -376,7 +411,7 @@ jupyter notebook
 
 Open:
 
-```
+```text
 notebooks/life_expectancy.ipynb
 ```
 
@@ -424,6 +459,15 @@ Main libraries:
 - scikit-learn
 - statsmodels
 - joblib
+
+
+---
+
+# License
+
+This project is licensed under the MIT License.
+
+See the [LICENSE](LICENSE) file for details.
 
 
 ---
