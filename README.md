@@ -57,11 +57,9 @@ The final analytical dataset consists of:
 
 ## Target Variable
 
-The prediction target was:
+The prediction target is:
 
-```text
 life_expectancy
-```
 
 
 ## Predictor Variables

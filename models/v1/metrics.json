@@ -1,7 +1,7 @@
 {
     "version": "v1",
     "model_name": "K-Nearest Neighbors",
-    "training_date": "2026-07-18",
+    "training_date": "2026-07-20",
     "training_data": "100% of the modelling dataset (retrained after model selection)",
     "evaluation_protocol": "80/20 train-test split performed before retraining",
     "cross_validation": "5-fold cross-validation",

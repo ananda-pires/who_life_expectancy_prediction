@@ -60,338 +60,8 @@ def _savefig(filename: str) -> None:
 
 
 # ======================================================
-# Exploratory Data Analysis (EDA)
-# ======================================================
-
-
-def plot_histogram(
-    series: pd.Series,
-    title: str,
-    filename: str,
-    bins: int = 30
-) -> None:
-    """
-    Plot histogram with kernel density estimate (KDE).
-
-    Parameters
-    ----------
-    series : pd.Series
-        Numerical variable to visualize.
-
-    title : str
-        Figure title.
-
-    filename : str
-        Output filename.
-
-    bins : int, default=30
-        Number of histogram bins.
-    """
-
-    fig, ax = plt.subplots(
-        figsize=(8, 5)
-    )
-
-    sns.histplot(
-        series.dropna(),
-        bins=bins,
-        kde=True,
-        color="#2E7D32",
-        ax=ax
-    )
-
-    ax.set_title(title)
-    ax.set_xlabel(series.name)
-    ax.set_ylabel("Frequency")
-
-    plt.tight_layout()
-
-    _savefig(filename)
-
-    plt.show()
-
-
-
-def plot_boxplots(
-    df: pd.DataFrame,
-    columns: list[str],
-    filename: str
-) -> None:
-    """
-    Plot boxplots for numerical variables.
-
-    Useful for identifying potential outliers.
-
-    Parameters
-    ----------
-    df : pd.DataFrame
-        Dataset containing variables.
-
-    columns : list[str]
-        Variables to visualize.
-
-    filename : str
-        Output filename.
-    """
-
-    fig, axes = plt.subplots(
-        ncols=len(columns),
-        figsize=(4 * len(columns), 5)
-    )
-
-    if len(columns) == 1:
-        axes = [axes]
-
-    for ax, column in zip(axes, columns):
-
-        sns.boxplot(
-            y=df[column],
-            color="#81C784",
-            ax=ax
-        )
-
-        ax.set_title(column)
-
-
-    plt.tight_layout()
-
-    _savefig(filename)
-
-    plt.show()
-
-
-
-def plot_multiple_histograms(
-    df: pd.DataFrame,
-    columns: list[str],
-    filename: str,
-    ncols: int = 2
-) -> None:
-    """
-    Plot distributions of multiple numerical variables.
-
-    Parameters
-    ----------
-    df : pd.DataFrame
-        Dataset.
-
-    columns : list[str]
-        Variables to plot.
-
-    filename : str
-        Output filename.
-
-    ncols : int, default=2
-        Number of subplot columns.
-    """
-
-    nrows = int(
-        np.ceil(len(columns) / ncols)
-    )
-
-    fig, axes = plt.subplots(
-        nrows=nrows,
-        ncols=ncols,
-        figsize=(14, 4 * nrows)
-    )
-
-    axes = np.array(axes).reshape(-1)
-
-
-    for ax, column in zip(axes, columns):
-
-        sns.histplot(
-            df[column],
-            kde=True,
-            ax=ax
-        )
-
-        ax.set_title(
-            f"Distribution of {column}"
-        )
-
-        ax.set_xlabel(column)
-
-
-    for ax in axes[len(columns):]:
-        ax.remove()
-
-
-    plt.tight_layout()
-
-    _savefig(filename)
-
-    plt.show()
-
-
-
-def plot_scatter(
-    df: pd.DataFrame,
-    x: str,
-    y: str,
-    filename: str
-) -> None:
-    """
-    Plot relationship between two numerical variables.
-
-    Parameters
-    ----------
-    df : pd.DataFrame
-        Dataset.
-
-    x : str
-        Predictor variable.
-
-    y : str
-        Target variable.
-
-    filename : str
-        Output filename.
-    """
-
-    fig, ax = plt.subplots(
-        figsize=(7, 5)
-    )
-
-    sns.scatterplot(
-        data=df,
-        x=x,
-        y=y,
-        alpha=0.4,
-        s=25,
-        color="#1565C0",
-        ax=ax
-    )
-
-    ax.set_title(
-        f"{y} vs {x}"
-    )
-
-
-    plt.tight_layout()
-
-    _savefig(filename)
-
-    plt.show()
-
-
-
-def plot_correlation_heatmap(
-    df: pd.DataFrame,
-    filename: str
-) -> None:
-    """
-    Plot Pearson correlation heatmap.
-
-    Parameters
-    ----------
-    df : pd.DataFrame
-        Dataset containing numerical variables.
-
-    filename : str
-        Output filename.
-    """
-
-    correlation = (
-        df
-        .select_dtypes(include=np.number)
-        .corr()
-    )
-
-
-    fig, ax = plt.subplots(
-        figsize=(12, 10)
-    )
-
-
-    sns.heatmap(
-        correlation,
-        cmap="RdYlGn",
-        center=0,
-        linewidths=0.5,
-        ax=ax
-    )
-
-
-    ax.set_title(
-        "Pearson Correlation Matrix"
-    )
-
-
-    plt.tight_layout()
-
-    _savefig(filename)
-
-    plt.show()
-
-# ======================================================
 # Data completeness and availability
 # ======================================================
-
-
-def plot_missing_values(
-    df: pd.DataFrame,
-    filename: str
-) -> None:
-    """
-    Plot percentage of missing values per variable.
-
-    Parameters
-    ----------
-    df : pd.DataFrame
-        Analytical dataset.
-
-    filename : str
-        Output filename.
-    """
-
-    missing = (
-        df
-        .isna()
-        .mean()
-        .sort_values(ascending=False)
-        * 100
-    )
-
-
-    fig, ax = plt.subplots(
-        figsize=(10, 5)
-    )
-
-
-    sns.barplot(
-        x=missing.index,
-        y=missing.values,
-        color="#5C6BC0",
-        ax=ax
-    )
-
-
-    ax.set_title(
-        "Percentage of Missing Values by Variable"
-    )
-
-    ax.set_ylabel(
-        "Missing values (%)"
-    )
-
-    ax.set_xlabel(
-        ""
-    )
-
-
-    ax.tick_params(
-        axis="x",
-        rotation=90
-    )
-
-
-    plt.tight_layout()
-
-    _savefig(filename)
-
-    plt.show()
-
 
 def plot_indicator_coverage(
     coverage: pd.DataFrame,
@@ -516,73 +186,116 @@ def plot_temporal_coverage(
 
 
 
-def plot_country_completeness(
-    completeness: pd.DataFrame,
-    filename: str,
-    top_n: int = 15
-) -> None:
 
+def plot_missing_values(
+    df: pd.DataFrame,
+    filename: str
+) -> None:
     """
-    Plot countries with highest and lowest data completeness.
+    Plot percentage of missing values per variable.
 
     Parameters
     ----------
-    completeness : pd.DataFrame
-        Country-level completeness dataframe.
+    df : pd.DataFrame
+        Analytical dataset.
 
     filename : str
         Output filename.
-
-    top_n : int, default=15
-        Number of countries displayed.
     """
 
-    data = completeness.copy()
-
-
-    data["Overall completeness"] = (
-        data
-        .select_dtypes(include=np.number)
-        .mean(axis=1)
-    )
-
-
-    data = (
-        data
-        .sort_values(
-            "Overall completeness"
-        )
-        .head(top_n)
+    missing = (
+        df
+        .isna()
+        .mean()
+        .sort_values(ascending=False)
+        * 100
     )
 
 
     fig, ax = plt.subplots(
-        figsize=(9, 6)
+        figsize=(10, 5)
     )
 
 
     sns.barplot(
-        data=data,
-        x="Overall completeness",
-        y="setting",
+        x=missing.index,
+        y=missing.values,
+        color="#5C6BC0",
         ax=ax
     )
 
 
     ax.set_title(
-        "Countries with Lowest Data Completeness"
+        "Percentage of Missing Values by Variable"
     )
-
-
-    ax.set_xlabel(
-        "Completeness (%)"
-    )
-
 
     ax.set_ylabel(
+        "Missing values (%)"
+    )
+
+    ax.set_xlabel(
         ""
     )
 
+
+    ax.tick_params(
+        axis="x",
+        rotation=90
+    )
+
+
+    plt.tight_layout()
+
+    _savefig(filename)
+
+    plt.show()
+
+
+
+# ======================================================
+# Exploratory Data Analysis (EDA)
+# ======================================================
+
+
+def plot_histogram(
+    series: pd.Series,
+    title: str,
+    filename: str,
+    bins: int = 30
+) -> None:
+    """
+    Plot histogram with kernel density estimate (KDE).
+
+    Parameters
+    ----------
+    series : pd.Series
+        Numerical variable to visualize.
+
+    title : str
+        Figure title.
+
+    filename : str
+        Output filename.
+
+    bins : int, default=30
+        Number of histogram bins.
+    """
+
+    fig, ax = plt.subplots(
+        figsize=(8, 5)
+    )
+
+    sns.histplot(
+        series.dropna(),
+        bins=bins,
+        kde=True,
+        color="#2E7D32",
+        ax=ax
+    )
+
+    ax.set_title(title)
+    ax.set_xlabel(series.name)
+    ax.set_ylabel("Frequency")
 
     plt.tight_layout()
 
@@ -636,132 +349,45 @@ def plot_correlation_heatmap(
     plt.show()
     
 
-# ======================================================
-# Time series analysis
-# ======================================================
-
-
-def plot_country_trend(
+def plot_boxplots(
     df: pd.DataFrame,
-    country: str,
-    target: str,
+    columns: list[str],
     filename: str
 ) -> None:
     """
-    Plot temporal evolution of an indicator for a country.
+    Plot boxplots for numerical variables.
+
+    Useful for identifying potential outliers.
 
     Parameters
     ----------
     df : pd.DataFrame
-        Analytical dataset.
+        Dataset containing variables.
 
-    country : str
-        Country name.
-
-    target : str
-        Variable to plot.
+    columns : list[str]
+        Variables to visualize.
 
     filename : str
         Output filename.
     """
 
-    data = (
-        df[df["setting"] == country]
-        .sort_values("date")
+    fig, axes = plt.subplots(
+        ncols=len(columns),
+        figsize=(4 * len(columns), 5)
     )
 
+    if len(columns) == 1:
+        axes = [axes]
 
-    fig, ax = plt.subplots(
-        figsize=(9, 5)
-    )
+    for ax, column in zip(axes, columns):
 
+        sns.boxplot(
+            y=df[column],
+            color="#81C784",
+            ax=ax
+        )
 
-    sns.lineplot(
-        data=data,
-        x="date",
-        y=target,
-        marker="o",
-        linewidth=2,
-        ax=ax
-    )
-
-
-    ax.set_title(
-        f"{target} trend - {country}"
-    )
-
-    ax.set_xlabel(
-        "Year"
-    )
-
-    ax.set_ylabel(
-        target
-    )
-
-
-    plt.tight_layout()
-
-    _savefig(filename)
-
-    plt.show()
-
-
-
-def plot_global_trend(
-    df: pd.DataFrame,
-    target: str,
-    filename: str
-) -> None:
-    """
-    Plot global mean trend of a variable over time.
-
-    Parameters
-    ----------
-    df : pd.DataFrame
-        Analytical dataset.
-
-    target : str
-        Variable to summarize.
-
-    filename : str
-        Output filename.
-    """
-
-    trend = (
-        df
-        .groupby("date")[target]
-        .mean()
-        .reset_index()
-    )
-
-
-    fig, ax = plt.subplots(
-        figsize=(9, 5)
-    )
-
-
-    sns.lineplot(
-        data=trend,
-        x="date",
-        y=target,
-        marker="o",
-        linewidth=2,
-        ax=ax
-    )
-
-
-    ax.set_title(
-        f"Global Average {target} Trend"
-    )
-
-
-    ax.set_xlabel(
-        "Year"
-    )
-
-    ax.set_ylabel(
-        target
-    )
+        ax.set_title(column)
 
 
     plt.tight_layout()
@@ -936,241 +562,3 @@ def plot_residuals(
 
 
     return residuals
-
-
-
-def plot_feature_importance(
-    importance,
-    feature_names,
-    filename: str,
-    top_n: int = 20
-) -> None:
-    """
-    Plot feature importance from a machine learning model.
-
-    Parameters
-    ----------
-    importance : array-like
-        Importance values.
-
-    feature_names : list
-        Predictor names.
-
-    filename : str
-        Output filename.
-
-    top_n : int, default=20
-        Number of features displayed.
-    """
-
-    importance_df = (
-        pd.DataFrame(
-            {
-                "Feature": feature_names,
-                "Importance": importance
-            }
-        )
-        .sort_values(
-            "Importance",
-            ascending=False
-        )
-        .head(top_n)
-    )
-
-
-    fig, ax = plt.subplots(
-        figsize=(8, 6)
-    )
-
-
-    sns.barplot(
-        data=importance_df,
-        x="Importance",
-        y="Feature",
-        ax=ax
-    )
-
-
-    ax.set_title(
-        "Feature Importance"
-    )
-
-
-    plt.tight_layout()
-
-    _savefig(filename)
-
-    plt.show()
-
-
-
-
-def plot_observed_vs_predicted(
-    observed,
-    predicted,
-    filename: str
-) -> None:
-    """
-    Plot observed versus predicted values.
-
-    Parameters
-    ----------
-    observed : array-like
-        True target values.
-
-    predicted : array-like
-        Model predictions.
-
-    filename : str
-        Output filename.
-    """
-
-    fig, ax = plt.subplots(
-        figsize=(7, 7)
-    )
-
-    ax.scatter(
-        observed,
-        predicted,
-        alpha=0.7
-    )
-
-    ax.plot(
-        [observed.min(), observed.max()],
-        [observed.min(), observed.max()],
-        linestyle="--",
-        linewidth=2,
-    )
-
-    ax.set_xlabel(
-        "Observed Life Expectancy (years)"
-    )
-
-    ax.set_ylabel(
-        "Predicted Life Expectancy (years)"
-    )
-
-    ax.set_title(
-        "Observed vs Predicted Life Expectancy"
-    )
-
-    plt.tight_layout()
-
-    _savefig(filename)
-
-    plt.show()
-
-
-def plot_residuals(
-    observed,
-    predicted,
-    filename: str
-) -> pd.Series:
-    """
-    Plot residuals versus predicted values.
-
-    Parameters
-    ----------
-    observed : array-like
-        True target values.
-
-    predicted : array-like
-        Model predictions.
-
-    filename : str
-        Output filename.
-
-    Returns
-    -------
-    pd.Series
-        Residuals (observed - predicted).
-    """
-
-    residuals = observed - predicted
-
-    fig, ax = plt.subplots(
-        figsize=(7, 6)
-    )
-
-    ax.scatter(
-        predicted,
-        residuals,
-        alpha=0.7
-    )
-
-    ax.axhline(
-        y=0,
-        linestyle="--",
-        linewidth=2
-    )
-
-    ax.set_xlabel(
-        "Predicted Life Expectancy (years)"
-    )
-
-    ax.set_ylabel(
-        "Residual (years)"
-    )
-
-    ax.set_title(
-        "Residuals vs Predicted Values"
-    )
-
-    plt.tight_layout()
-
-    _savefig(filename)
-
-    plt.show()
-
-    return residuals
-
-
-def plot_model_comparison(
-    metrics_df: pd.DataFrame,
-    metric: str,
-    filename: str
-) -> None:
-    """
-    Plot comparison between machine learning models.
-
-    Parameters
-    ----------
-    metrics_df : pd.DataFrame
-        DataFrame containing model performance.
-
-    metric : str
-        Metric used for comparison.
-
-    filename : str
-        Output filename.
-    """
-
-    fig, ax = plt.subplots(
-        figsize=(8, 5)
-    )
-
-
-    sns.barplot(
-        data=metrics_df,
-        x="Model",
-        y=metric,
-        ax=ax
-    )
-
-
-    ax.set_title(
-        f"Model Comparison - {metric}"
-    )
-
-
-    ax.tick_params(
-        axis="x",
-        rotation=45
-    )
-
-
-    plt.tight_layout()
-
-    _savefig(filename)
-
-    plt.show()
