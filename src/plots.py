@@ -427,10 +427,12 @@ def plot_observed_vs_predicted(
         Output filename.
     """
 
+    y_true = np.asarray(y_true)
+    y_pred = np.asarray(y_pred)
+
     fig, ax = plt.subplots(
         figsize=(7, 6)
     )
-
 
     ax.scatter(
         y_true,
@@ -440,12 +442,10 @@ def plot_observed_vs_predicted(
         color="#2E7D32"
     )
 
-
     limits = [
         min(y_true.min(), y_pred.min()),
         max(y_true.max(), y_pred.max())
     ]
-
 
     ax.plot(
         limits,
@@ -455,7 +455,6 @@ def plot_observed_vs_predicted(
         linewidth=1.5,
         label="Perfect prediction"
     )
-
 
     ax.set_xlabel(
         "Observed values"
@@ -469,16 +468,13 @@ def plot_observed_vs_predicted(
         title
     )
 
-
     ax.legend()
-
 
     plt.tight_layout()
 
     _savefig(filename)
 
     plt.show()
-
 
 
 def plot_residuals(
@@ -513,25 +509,23 @@ def plot_residuals(
         Calculated residuals.
     """
 
-    residuals = (
-        pd.Series(y_true)
-        -
-        pd.Series(y_pred)
-    )
+    y_true_series = pd.Series(y_true)
 
+    residuals = pd.Series(
+        y_true_series.to_numpy() - np.asarray(y_pred),
+        index=y_true_series.index,
+    )
 
     fig, ax = plt.subplots(
         figsize=(8, 5)
     )
 
-
     ax.scatter(
-        y_pred,
-        residuals,
+        np.asarray(y_pred),
+        residuals.to_numpy(),
         alpha=0.5,
         color="#81C784"
     )
-
 
     ax.axhline(
         0,
@@ -539,7 +533,6 @@ def plot_residuals(
         color="#C62828",
         linewidth=1.5
     )
-
 
     ax.set_xlabel(
         "Predicted values"
@@ -553,12 +546,10 @@ def plot_residuals(
         title
     )
 
-
     plt.tight_layout()
 
     _savefig(filename)
 
     plt.show()
-
 
     return residuals
