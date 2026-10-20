@@ -476,3 +476,120 @@ Ananda Christina Staats Pires
 
 Machine Learning Project  
 WHO Health Inequality Data Repository (HIDR)
+
+## FastAPI Prediction Service
+
+### Overview
+
+This project includes a FastAPI service for predicting life expectancy from seven health and socioeconomic indicators derived from the World Health Organization (WHO) Health Inequality Data Repository (HIDR).
+
+The API uses the project's trained K-Nearest Neighbors (KNN) regression model and its fitted `StandardScaler`. The model and scaler are loaded once during application startup and kept in memory for subsequent predictions.
+
+### Model Information
+
+- **Model:** K-Nearest Neighbors regressor
+- **Model version:** v1
+- **Target:** `life_expectancy`, measured in years
+- **Input features:**
+  - `obesity_prevalence`
+  - `diabetes_treatment`
+  - `polluting_cooking_fuels`
+  - `hypertension_treatment`
+  - `mean_years_schooling`
+  - `expected_years_schooling`
+  - `alcohol_consumption`
+- **Preprocessing:** fitted `StandardScaler`
+- **Serialization:** Joblib
+- **Model artifacts:** `models/v1/knn_model.joblib` and `models/v1/standard_scaler.joblib`
+
+The existing held-out test evaluation reported MAE = 0.8343 years, MSE = 2.6129 years², RMSE = 1.6164 years, and R² = 0.9657. These figures come from the model evaluation performed during model development; they are not a new evaluation of the API or a guarantee of performance on unseen countries or future years.
+
+### Technology Stack
+
+The API uses Python 3.12, FastAPI, Uvicorn, Pydantic v2, scikit-learn, pandas, and Joblib. Exact package versions are specified in `requirements.txt`.
+
+### Installation
+
+From the repository root, create and activate the Conda environment if it does not already exist:
+
+```bash
+conda create -n life_expectancy python=3.12
+conda activate life_expectancy
+python -m pip install -r requirements.txt
+```
+
+If the `life_expectancy` environment already exists, activate it instead of creating it again.
+
+### Run the API
+
+From the repository root, run:
+
+```bash
+uvicorn src.api.main:app --reload
+```
+
+The development server is available at `http://127.0.0.1:8000`.
+
+Interactive API documentation is available at `http://127.0.0.1:8000/docs`.
+
+### Endpoints
+
+| Method | Endpoint | Description |
+|---|---|---|
+| GET | `/health` | Reports API status and whether the model is loaded |
+| POST | `/predict` | Validates input features and predicts life expectancy |
+
+The prediction endpoint validates requests with Pydantic. Percentage indicators must be between 0 and 100, schooling indicators between 0 and 30 years, and alcohol consumption between 0 and 50. Requests with invalid types, missing fields, extra fields, or out-of-range values are rejected with HTTP 422.
+
+If the model is unavailable, the prediction endpoint returns HTTP 503.
+
+### Example Request
+
+Send a POST request to `/predict` with the following JSON body:
+
+```json
+{
+  "obesity_prevalence": 25.0,
+  "diabetes_treatment": 60.0,
+  "polluting_cooking_fuels": 10.0,
+  "hypertension_treatment": 45.0,
+  "mean_years_schooling": 8.5,
+  "expected_years_schooling": 12.0,
+  "alcohol_consumption": 6.0
+}
+```
+
+Example response:
+
+```json
+{
+  "prediction": 74.13103333333333,
+  "target": "life_expectancy",
+  "model_version": "v1"
+}
+```
+
+The response above corresponds to a local test request. Predictions depend on the supplied input values.
+
+### Project Architecture
+
+- `src/api/main.py`: creates the FastAPI application and manages model loading through the lifespan context manager.
+- `src/api/schemas.py`: defines Pydantic request and response schemas and input constraints.
+- `src/api/services.py`: loads the model artifacts and performs preprocessing and inference.
+- `src/api/routers.py`: defines the health-check and prediction endpoints.
+- `src/config.py`: defines project-relative artifact paths.
+- `models/v1/`: contains the serialized model, scaler, and evaluation metadata.
+
+### Validation and Testing
+
+The API was tested locally with the following checks:
+
+- Health endpoint returns HTTP 200 and confirms that the model is loaded.
+- A valid prediction request returns HTTP 200 with a prediction.
+- An obesity prevalence value above 100 returns HTTP 422.
+
+### Demo Video
+
+**Video link:** To be added after uploading the project demonstration to Google Drive.
+
+The demonstration should cover the project architecture, model artifacts, API startup, health check, valid prediction, and invalid-input validation. Keep the video within the assignment's 10-minute limit.
