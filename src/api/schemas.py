@@ -11,7 +11,7 @@ AlcoholConsumption = Annotated[float, Field(ge=0, le=50, allow_inf_nan=False)]
 
 
 class PredictionRequest(BaseModel):
-    """Validated input features required by the trained KNN model."""
+    """Validated input features required by the trained prediction pipeline."""
 
     model_config = ConfigDict(extra="forbid", strict=True)
 
@@ -34,7 +34,7 @@ class PredictionResponse(BaseModel):
         allow_inf_nan=False,
     )
     target: str = Field(default="life_expectancy")
-    model_version: str = Field(default="v1")
+    model_version: str = Field(default="v2")
 
 
 class HealthResponse(BaseModel):

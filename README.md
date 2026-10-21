@@ -250,107 +250,58 @@ KNN Regression was evaluated because:
 
 # Model Performance
 
-## Test Set Evaluation (80/20 split)
+Version 2 evaluates two different generalization scenarios. These results are reported separately because the test protocols answer different questions.
 
-| Model | MAE | RMSE | R² |
+## Evaluation protocols
+
+**Temporal evaluation:** Models are trained on observations before 2018 and evaluated on observations from 2018–2022. All 164 countries in the test period also occur in training. This measures performance on later observations for represented countries, not on unseen countries.
+
+**Unseen-country evaluation:** `GroupShuffleSplit` holds out 33 countries for testing and uses 131 countries for training. There is no country overlap. KNN tuning uses five-fold `GroupKFold` cross-validation on the training countries.
+
+Both model families use a scikit-learn pipeline with median imputation, standardization, and the estimator. Preprocessing is fitted within the training data in each cross-validation fold.
+
+## Temporal test results (2018–2022)
+
+| Model | MAE (years) | RMSE (years) | R² |
 |---|---:|---:|---:|
-| Multiple Linear Regression | 2.96 | 3.99 | 0.79 |
-| K-Nearest Neighbors | 0.83 | 1.62 | 0.97 |
+| Multiple Linear Regression | 2.885 | 3.725 | 0.748 |
+| K-Nearest Neighbors | 1.719 | 2.817 | 0.856 |
 
+KNN performs better on this held-out period. Its forward-chaining cross-validation MAE was 0.821 years, compared with 2.864 years for Linear Regression. The difference between KNN's cross-validation and test errors shows that performance varied across time periods.
 
-KNN substantially improved prediction accuracy compared with the linear baseline.
+## Unseen-country test results
 
-
----
-
-# Training vs Testing Performance — Final KNN Model
-
-| Dataset | MAE | RMSE | R² |
+| Model | MAE (years) | RMSE (years) | R² |
 |---|---:|---:|---:|
-| Training | 0.58 | 1.12 | 0.98 |
-| Testing | 0.83 | 1.62 | 0.97 |
+| Multiple Linear Regression | 2.769 | 3.500 | 0.791 |
+| K-Nearest Neighbors | 2.705 | 3.469 | 0.795 |
 
+KNN has a slightly lower MAE on the held-out countries. However, the country-grouped cross-validation MAE favors Linear Regression.
 
-The small difference between training and testing performance indicates good generalization without evidence of substantial overfitting.
+## Cross-validation and production model selection
 
+| Evaluation protocol | Model | Cross-validation MAE (years) |
+|---|---|---:|
+| Temporal forward-chaining CV | Multiple Linear Regression | 2.864 |
+| Temporal forward-chaining CV | K-Nearest Neighbors | 0.821 |
+| Country-grouped CV | Multiple Linear Regression | 3.186 |
+| Country-grouped CV | K-Nearest Neighbors | 3.404 |
 
----
+KNN hyperparameters are selected using mean absolute error. Temporal evaluation uses forward-chaining splits; unseen-country evaluation uses country-grouped folds.
 
-# Cross-Validation Evaluation
+**Production model:** Multiple Linear Regression was selected for v2 because its country-grouped cross-validation MAE (3.186 years) was lower than KNN's (3.404 years). This selection prioritizes generalization to countries excluded from individual training folds; it does not mean Linear Regression is best under every protocol.
 
-Five-fold cross-validation was performed to evaluate model stability across different data partitions.
+## Version 2 artifacts
 
+The training script `src/modeling/train_pipeline.py` saves models, predictions, evaluation tables, and diagnostic figures under the v2 output directories.
 
-| Model | MAE | RMSE | R² |
-|---|---:|---:|---:|
-| Multiple Linear Regression | 2.97 ± 0.05 | 4.09 ± 0.07 | 0.78 ± 0.01 |
-| K-Nearest Neighbors | 0.84 ± 0.03 | 1.53 ± 0.08 | 0.97 ± 0.00 |
+The production pipeline is `models/v2/production_pipeline.joblib`. It includes the fitted preprocessing steps and estimator and is retrained on all eligible labelled observations after model selection. Metadata is saved in `models/v2/metadata.json`.
 
+The seven predictors are `obesity_prevalence`, `diabetes_treatment`, `polluting_cooking_fuels`, `hypertension_treatment`, `mean_years_schooling`, `expected_years_schooling`, and `alcohol_consumption`.
 
-The cross-validation results confirmed that KNN consistently outperformed Linear Regression across different validation folds.
+## Historical version 1 results
 
-
----
-
-# Final Model Selection
-
-The final model was selected considering:
-
-- Predictive accuracy
-- Generalization performance
-- Cross-validation stability
-
-
-The selected model was:
-
-```text
-K-Nearest Neighbors Regression
-```
-
-
-Final feature representation:
-
-```text
-Original predictors
-```
-
-
-Although engineered features provided a more compact representation, they did not improve model performance.
-
-
----
-
-# Phase 6 — Final Model Training and Versioning
-
-After unbiased evaluation using the 80/20 train-test split and five-fold cross-validation, the selected model was retrained using 100% of the available modelling dataset.
-
-The final model and preprocessing pipeline were saved for reproducible future predictions.
-
-The reported evaluation metrics correspond to the independent test set and cross-validation results obtained before final retraining.
-
-
-Saved artefacts:
-
-```
-models/v1/
-
-├── knn_model.joblib
-├── standard_scaler.joblib
-└── metrics.json
-```
-
-
-The metadata file contains:
-
-- Model version
-- Training date
-- Target variable
-- Predictor variables
-- Preprocessing method
-- Evaluation metrics
-
-
----
+Version 1 reported KNN test metrics of MAE = 0.8343 years, MSE = 2.6129 years², RMSE = 1.6164 years, and R² = 0.9657. These came from a different random train-test split and should not be directly compared with the v2 temporal or country-grouped results.
 
 # Reproducibility
 
@@ -483,12 +434,12 @@ WHO Health Inequality Data Repository (HIDR)
 
 This project includes a FastAPI service for predicting life expectancy from seven health and socioeconomic indicators derived from the World Health Organization (WHO) Health Inequality Data Repository (HIDR).
 
-The API uses the project's trained K-Nearest Neighbors (KNN) regression model and its fitted `StandardScaler`. The model and scaler are loaded once during application startup and kept in memory for subsequent predictions.
+The API loads the v2 production pipeline at application startup and reuses it for subsequent predictions. The pipeline performs its own preprocessing, so the API does not apply a separate scaler.
 
 ### Model Information
 
-- **Model:** K-Nearest Neighbors regressor
-- **Model version:** v1
+- **Model:** Multiple Linear Regression
+- **Model version:** v2
 - **Target:** `life_expectancy`, measured in years
 - **Input features:**
   - `obesity_prevalence`
@@ -498,11 +449,11 @@ The API uses the project's trained K-Nearest Neighbors (KNN) regression model an
   - `mean_years_schooling`
   - `expected_years_schooling`
   - `alcohol_consumption`
-- **Preprocessing:** fitted `StandardScaler`
+- **Preprocessing:** median imputation and standardization within the fitted pipeline
 - **Serialization:** Joblib
-- **Model artifacts:** `models/v1/knn_model.joblib` and `models/v1/standard_scaler.joblib`
+- **Model artifact:** `models/v2/production_pipeline.joblib`
 
-The existing held-out test evaluation reported MAE = 0.8343 years, MSE = 2.6129 years², RMSE = 1.6164 years, and R² = 0.9657. These figures come from the model evaluation performed during model development; they are not a new evaluation of the API or a guarantee of performance on unseen countries or future years.
+The production model was selected using country-grouped cross-validation. On the held-out country test set, Linear Regression achieved MAE = 2.769 years, RMSE = 3.500 years, and R² = 0.791. These are evaluation results, not a guarantee of performance for every prediction.
 
 ### Technology Stack
 

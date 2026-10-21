@@ -1,0 +1,44 @@
+{
+  "model_version": "v2",
+  "created_at_utc": "2026-10-21T13:17:34.881599+00:00",
+  "sklearn_version": "1.9.0",
+  "pandas_version": "3.0.3",
+  "random_state": 42,
+  "source_dataset": "/Users/anandastaats/who-life-expectancy_prediction/data/processed/analytical_dataset.csv",
+  "target": "life_expectancy",
+  "features": [
+    "obesity_prevalence",
+    "diabetes_treatment",
+    "polluting_cooking_fuels",
+    "hypertension_treatment",
+    "mean_years_schooling",
+    "expected_years_schooling",
+    "alcohol_consumption"
+  ],
+  "period": [
+    2000,
+    2022
+  ],
+  "n_observations": 3706,
+  "n_countries": 164,
+  "temporal_test_start_year": 2018,
+  "temporal_knn_best_params": {
+    "model__n_neighbors": 3,
+    "model__p": 1,
+    "model__weights": "distance"
+  },
+  "country_knn_best_params": {
+    "model__n_neighbors": 21,
+    "model__p": 1,
+    "model__weights": "uniform"
+  },
+  "country_cv_mae": {
+    "linear_regression": 3.1864720663367656,
+    "knn": 3.4042210494476897
+  },
+  "production_model": "linear_regression",
+  "production_selection_metric": "5-fold GroupKFold mean MAE",
+  "production_selection_cv_mae": 3.1864720663367656,
+  "production_artifact": "production_pipeline.joblib",
+  "note": "Temporal and unseen-country results answer different questions. The production pipeline is refitted on all labelled observations after model selection using grouped cross-validation."
+}

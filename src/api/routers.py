@@ -16,10 +16,7 @@ router = APIRouter()
 @router.get("/health", response_model=HealthResponse)
 def health_check(request: Request) -> HealthResponse:
     """Report whether the API and its model are ready."""
-    model_loaded = (
-        getattr(request.app.state, "model", None) is not None
-        and getattr(request.app.state, "scaler", None) is not None
-    )
+    model_loaded = getattr(request.app.state, "model", None) is not None
 
     return HealthResponse(
         status="ok" if model_loaded else "unavailable",
@@ -39,9 +36,8 @@ def predict(
 ) -> PredictionResponse:
     """Predict life expectancy from validated health indicators."""
     model = getattr(request.app.state, "model", None)
-    scaler = getattr(request.app.state, "scaler", None)
 
-    if model is None or scaler is None:
+    if model is None:
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail="The prediction model is not available.",
@@ -50,7 +46,6 @@ def predict(
     try:
         prediction = predict_life_expectancy(
             model=model,
-            scaler=scaler,
             features=payload.model_dump(),
         )
     except (ValueError, RuntimeError) as exc:
@@ -59,4 +54,7 @@ def predict(
             detail="Prediction failed.",
         ) from exc
 
-    return PredictionResponse(prediction=prediction)
+    return PredictionResponse(
+        prediction=prediction,
+        model_version=MODEL_VERSION,
+    )

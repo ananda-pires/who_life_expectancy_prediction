@@ -21,8 +21,10 @@ def test_health_endpoint_reports_loaded_model():
         response = client.get("/health")
 
     assert response.status_code == 200
-    assert response.json()["status"] == "ok"
-    assert response.json()["model_loaded"] is True
+    body = response.json()
+    assert body["status"] == "ok"
+    assert body["model_loaded"] is True
+    assert body["model_version"] == "v2"
 
 
 def test_prediction_endpoint_returns_valid_prediction():
@@ -34,7 +36,7 @@ def test_prediction_endpoint_returns_valid_prediction():
     assert isinstance(body["prediction"], float)
     assert 0 < body["prediction"] < 150
     assert body["target"] == "life_expectancy"
-    assert body["model_version"] == "v1"
+    assert body["model_version"] == "v2"
 
 
 def test_prediction_rejects_percentage_above_100():

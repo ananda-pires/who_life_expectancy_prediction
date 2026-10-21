@@ -10,15 +10,12 @@ from src.api.services import load_model_artifacts
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """Load model artifacts once when the application starts."""
-    model, scaler = load_model_artifacts()
-    app.state.model = model
-    app.state.scaler = scaler
+    """Load the trained prediction pipeline when the application starts."""
+    app.state.model = load_model_artifacts()
 
     yield
 
     app.state.model = None
-    app.state.scaler = None
 
 
 app = FastAPI(
@@ -27,7 +24,7 @@ app = FastAPI(
         "Predict population-level life expectancy from seven "
         "WHO health inequality indicators."
     ),
-    version="1.0.0",
+    version="2.0.0",
     lifespan=lifespan,
 )
 
