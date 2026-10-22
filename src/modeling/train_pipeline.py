@@ -362,7 +362,7 @@ def main():
         "sklearn_version": sklearn.__version__,
         "pandas_version": pd.__version__,
         "random_state": RANDOM_STATE,
-        "source_dataset": str(source),
+        "source_dataset": source.relative_to(ROOT_DIR).as_posix(),
         "target": TARGET,
         "features": FEATURES,
         "period": [START_YEAR, END_YEAR],

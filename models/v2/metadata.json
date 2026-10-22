@@ -4,7 +4,7 @@
   "sklearn_version": "1.9.0",
   "pandas_version": "3.0.3",
   "random_state": 42,
-  "source_dataset": "/Users/anandastaats/who-life-expectancy_prediction/data/processed/analytical_dataset.csv",
+  "source_dataset": "data/processed/analytical_dataset.csv",
   "target": "life_expectancy",
   "features": [
     "obesity_prevalence",

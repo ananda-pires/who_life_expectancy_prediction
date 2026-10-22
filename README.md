@@ -410,24 +410,6 @@ Main libraries:
 - joblib
 
 
----
-
-# License
-
-This project is licensed under the MIT License.
-
-See the [LICENSE](LICENSE) file for details.
-
-
----
-
-# Author
-
-Ananda Christina Staats Pires
-
-Machine Learning Project  
-WHO Health Inequality Data Repository (HIDR)
-
 ## FastAPI Prediction Service
 
 ### Overview
@@ -514,22 +496,23 @@ Example response:
 
 ```json
 {
-  "prediction": 74.13103333333333,
+  "prediction": 76.09074810957026,
   "target": "life_expectancy",
-  "model_version": "v1"
+  "model_version": "v2"
 }
 ```
 
 The response above corresponds to a local test request. Predictions depend on the supplied input values.
 
-### Project Architecture
+### API Project Architecture
 
 - `src/api/main.py`: creates the FastAPI application and manages model loading through the lifespan context manager.
 - `src/api/schemas.py`: defines Pydantic request and response schemas and input constraints.
 - `src/api/services.py`: loads the model artifacts and performs preprocessing and inference.
 - `src/api/routers.py`: defines the health-check and prediction endpoints.
-- `src/config.py`: defines project-relative artifact paths.
-- `models/v1/`: contains the serialized model, scaler, and evaluation metadata.
+- `src/config.py`: defines project paths used by the training pipeline.
+- `models/v2/production_pipeline.joblib`: contains the serialized preprocessing and prediction pipeline loaded by the API.
+- `models/v2/metadata.json`: records the production model version, features, training data path, and selection metadata.
 
 ### Validation and Testing
 
@@ -541,6 +524,22 @@ The API was tested locally with the following checks:
 
 ### Demo Video
 
-**Video link:** To be added after uploading the project demonstration to Google Drive.
+**Video link:**
 
-The demonstration should cover the project architecture, model artifacts, API startup, health check, valid prediction, and invalid-input validation. Keep the video within the assignment's 10-minute limit.
+---
+
+# License
+
+This project is licensed under the MIT License.
+
+See the [LICENSE](LICENSE) file for details.
+
+
+---
+
+# Author
+
+Ananda Christina Staats Pires
+
+Machine Learning Project
+WHO Health Inequality Data Repository (HIDR)

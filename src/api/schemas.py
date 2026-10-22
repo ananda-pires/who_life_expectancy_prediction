@@ -15,13 +15,27 @@ class PredictionRequest(BaseModel):
 
     model_config = ConfigDict(extra="forbid", strict=True)
 
-    obesity_prevalence: Percentage
-    diabetes_treatment: Percentage
-    polluting_cooking_fuels: Percentage
-    hypertension_treatment: Percentage
-    mean_years_schooling: SchoolingYears
-    expected_years_schooling: SchoolingYears
-    alcohol_consumption: AlcoholConsumption
+    obesity_prevalence: Percentage = Field(
+        description="Adult obesity prevalence, expressed as a percentage (0–100)."
+    )
+    diabetes_treatment: Percentage = Field(
+        description="Diabetes treatment coverage, expressed as a percentage (0–100)."
+    )
+    polluting_cooking_fuels: Percentage = Field(
+        description="Prevalence of polluting cooking fuels, expressed as a percentage (0–100)."
+    )
+    hypertension_treatment: Percentage = Field(
+        description="Hypertension treatment coverage, expressed as a percentage (0–100)."
+    )
+    mean_years_schooling: SchoolingYears = Field(
+        description="Mean years of schooling (0–30 years)."
+    )
+    expected_years_schooling: SchoolingYears = Field(
+        description="Expected years of schooling (0–30 years)."
+    )
+    alcohol_consumption: AlcoholConsumption = Field(
+        description="Alcohol consumption indicator on the dataset scale (0–50)."
+    )
 
 
 class PredictionResponse(BaseModel):
