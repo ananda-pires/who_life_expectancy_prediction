@@ -1,11 +1,10 @@
 """Model loading and inference services for the prediction API."""
 
 import math
+from pathlib import Path
 
+import joblib
 import pandas as pd
-
-from src.config import MODEL_FILE, SCALER_FILE
-from src.modeling.train import load_model
 
 
 FEATURES = [
@@ -18,25 +17,27 @@ FEATURES = [
     "alcohol_consumption",
 ]
 
-MODEL_VERSION = "v1"
+MODEL_VERSION = "v2"
+MODEL_FILE = (
+    Path(__file__).resolve().parents[2]
+    / "models"
+    / "v2"
+    / "production_pipeline.joblib"
+)
 
 
 def load_model_artifacts():
-    """Load the trained estimator and scaler from disk."""
+    """Load the complete preprocessing and prediction pipeline."""
     if not MODEL_FILE.is_file():
         raise FileNotFoundError(f"Model artifact not found: {MODEL_FILE}")
 
-    if not SCALER_FILE.is_file():
-        raise FileNotFoundError(f"Scaler artifact not found: {SCALER_FILE}")
-
-    return load_model()
+    return joblib.load(MODEL_FILE)
 
 
-def predict_life_expectancy(model, scaler, features: dict[str, float]) -> float:
-    """Scale validated features and return the model prediction."""
+def predict_life_expectancy(model, features: dict[str, float]) -> float:
+    """Return a prediction from the complete trained pipeline."""
     input_frame = pd.DataFrame([features], columns=FEATURES)
-    scaled_input = scaler.transform(input_frame)
-    prediction = float(model.predict(scaled_input)[0])
+    prediction = float(model.predict(input_frame)[0])
 
     if not math.isfinite(prediction):
         raise ValueError("The model returned a non-finite prediction.")
