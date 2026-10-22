@@ -524,7 +524,7 @@ The API was tested locally with the following checks:
 
 ### Demo Video
 
-**Video link:**
+**Video link:** https://drive.google.com/drive/folders/1Q-jTRzOH1ysMdWZKhdU_COdw0zjCZZg6?usp=drive_link
 
 ---
 
