@@ -1,528 +1,210 @@
 # Predicting Life Expectancy Using the WHO Health Inequality Data Repository (HIDR)
 
-## Project Overview
+A regression model, served as a REST API (FastAPI), that predicts population-level **life expectancy (years)** from seven health, education and lifestyle indicators from the **WHO Health Inequality Data Repository (HIDR)**.
 
-This project develops an end-to-end machine learning pipeline to predict **life expectancy** using global health inequality indicators from the **WHO Health Inequality Data Repository (HIDR)**.
-
-The objective is to investigate whether socioeconomic, healthcare, environmental, and behavioral indicators can accurately predict population-level life expectancy across countries and years.
-
-The project follows a reproducible machine learning workflow including:
-
-- Automated WHO HIDR dataset acquisition
-- Dataset harmonization and integration
-- Exploratory data analysis (EDA)
-- Feature selection
-- Feature engineering
-- Regression model development
-- Model evaluation and comparison
-- Cross-validation
-- Final model training and versioning
-
+> ## Main evaluation protocol: TEMPORAL
+> The model is trained on **2000-2017** and tested on **2018-2022**.
+>
+> **Question answered:** can the model predict life expectancy in *later years* for countries that already appear in the training period?
+>
+> **Not answered by the main protocol:** performance on countries never seen in training. That is reported separately as a *complementary* analysis and **never influences model selection**.
 
 ---
 
-# Research Question
+## 1. Problem and data
 
-**Can machine learning models predict life expectancy using multidimensional health inequality indicators from the WHO Health Inequality Data Repository?**
+- **Predictive question:** can multidimensional health inequality indicators predict a country's life expectancy?
+- **Source:** WHO Health Inequality Data Repository (HIDR) - https://www.who.int/data/inequality-monitor/data/hidr-api (thematic datasets: life expectancy, health care, NCDs, alcohol, environment, education, development).
+- **Analytical unit:** country-year. Modelling dataset: **3,706 labelled observations, 164 countries, 2000-2022**.
+- **Target:** `life_expectancy` (years).
+- Country (`iso3`) and year (`date`) structure the splits only. **They are not predictors.**
 
+### Predictors (same order in training and API)
 
----
+| Predictor | Definition | Unit | API range* |
+|---|---|---|---|
+| `obesity_prevalence` | Obesity among adults, BMI>=30, age-standardized | % | 0-100 |
+| `diabetes_treatment` | Diabetes treatment coverage, 30+ years, age-standardized | % | 0-100 |
+| `polluting_cooking_fuels` | Population relying primarily on polluting fuels and technologies for cooking | % | 0-100 |
+| `hypertension_treatment` | Hypertension treatment coverage, adults 30-79 with hypertension, age-standardized | % | 0-100 |
+| `mean_years_schooling` | Mean years of schooling, population aged 25+ | years | 0-20 |
+| `expected_years_schooling` | Expected years of schooling, children aged 6 | years | 0-25 |
+| `alcohol_consumption` | Per capita alcohol consumption, 15+ years, **among drinkers only** | litres of pure alcohol per year | 0-100 |
 
-# Dataset
+\* **The API ranges are operational plausibility limits, not official WHO thresholds.** Percentages use 0-100 by definition of a proportion. The other limits were set with margin above the maximum observed in the data (2000-2022): mean schooling 14.78, expected schooling 18.00, alcohol 71.38. Alcohol values are high because the indicator averages only over people who drink, not the whole population.
 
-## Data Source
+## 2. Model
 
-The analytical dataset was constructed by integrating multiple thematic datasets from the WHO HIDR:
+- **Official production artifact:** `models/v2/production_pipeline.joblib` (one scikit-learn `Pipeline`: `SimpleImputer(median)` -> `StandardScaler` -> estimator).
+- **Selected model:** K-Nearest Neighbors regression (`n_neighbors=3`, `p=1`, `weights="distance"`), chosen by the lowest mean MAE in forward-chaining validation.
+- The deployed pipeline is **refitted on all labelled observations (2000-2022)** after evaluation. Test metrics belong to the model trained on 2000-2017.
+- Version 1 (`models/v1/`, random split, KNN) is kept only as history. It is **not** used by the API and its metrics are not comparable (see Section 6).
 
-- Life expectancy and mortality indicators
-- Healthcare system indicators
-- Noncommunicable disease indicators
-- Tobacco and alcohol indicators
-- Environmental health indicators
-- Water, sanitation and hygiene indicators
-- Development indicators
-- Multidimensional Poverty Index
+## 3. Technologies and versions
 
+Python 3.12.13, pandas 3.0.3, numpy 2.4.5, scikit-learn 1.9.0, joblib 1.5.3, FastAPI 0.151.0, Uvicorn 0.54.0, Pydantic 2.14.1, pytest 9.1.1, httpx 0.28.1, Jupyter 1.1.1. Full list in `requirements.txt`.
 
-## Analytical Unit
+## 4. Project structure
 
-The final analytical dataset consists of:
 
-- Country-year observations
-- Global population coverage
-- 6,927 country-year observations
-- 18 harmonized indicators
-- Time period: 2000–2022
+## 5. Setup, training and running
 
-
-## Target Variable
-
-The prediction target is:
-
-life_expectancy
-
-
-## Predictor Variables
-
-The final model used the following predictors:
-
-
-### Education
-
-- Mean years of schooling
-- Expected years of schooling
-
-
-### Healthcare
-
-- Diabetes treatment coverage
-- Hypertension treatment coverage
-
-
-### Environmental
-
-- Polluting cooking fuels prevalence
-
-
-### Behavioral and Lifestyle
-
-- Alcohol consumption
-- Adult obesity prevalence
-
-
----
-
-# Project Structure
-
-```
-who-life-expectancy_prediction/
-
-│
-├── data/
-│   ├── raw/              # Original WHO HIDR datasets
-│   ├── cache/            # Cached downloaded datasets
-│   ├── processed/        # Intermediate analytical datasets
-│   └── final/            # Final modelling dataset
-│
-├── models/
-│   └── v1/
-│       ├── knn_model.joblib
-│       ├── standard_scaler.joblib
-│       └── metrics.json
-│
-├── notebooks/
-│   └── life_expectancy.ipynb
-│
-├── outputs/
-│   ├── figures/
-│   ├── tables/
-│   └── reports/
-│
-├── src/
-│   ├── config.py
-│   ├── dataset.py
-│   ├── feature_selection.py
-│   ├── features.py
-│   ├── harmonization.py
-│   ├── plots.py
-│   └── modeling/
-│       └── train.py
-│
-├── requirements.txt
-└── README.md
-
-```
-
-
----
-
-# Machine Learning Workflow
-
-## Phase 1 — Data Acquisition and Harmonization
-
-WHO HIDR datasets were downloaded using reusable data-loading functions.
-
-The pipeline included:
-
-- Dataset catalogue exploration
-- Automated dataset download
-- Local caching
-- Dataset quality assessment
-- Variable harmonization
-- Country-year dataset integration
-
-
----
-
-## Phase 2 — Exploratory Data Analysis
-
-Exploratory analysis included:
-
-- Missing data assessment
-- Indicator coverage analysis
-- Temporal coverage evaluation
-- Variable distributions
-- Correlation analysis
-- Outlier inspection
-
-
-Main findings:
-
-- Education indicators showed strong positive associations with life expectancy.
-- Healthcare coverage indicators were strongly associated with improved life expectancy.
-- Environmental risk factors showed negative associations with life expectancy.
-
-
----
-
-## Phase 3 — Feature Engineering
-
-Feature engineering was performed to evaluate whether domain-based composite variables could improve prediction.
-
-Two engineered features were created:
-
-- Education Index
-- Healthcare Index
-
-
-The engineered features replaced highly correlated variables to reduce redundancy.
-
-However, the engineered representation did not improve predictive performance compared with the original predictors.
-
-
----
-
-## Phase 4 — Data Preparation
-
-The final modelling dataset was prepared using:
-
-- Missing target removal
-- Predictor selection
-- Median imputation
-- Train-test splitting
-- Feature scaling
-
-
-Dataset split:
-
-```
-Training set: 80%
-Testing set: 20%
-```
-
-
-Scaling method:
-
-```
-StandardScaler
-```
-
-
-The scaler was fitted only using training data to prevent data leakage.
-
-
----
-
-# Phase 5 — Model Development and Evaluation
-
-Two regression algorithms were evaluated.
-
-
-## Baseline Model: Multiple Linear Regression
-
-Multiple Linear Regression was selected as the baseline model because it provides:
-
-- High interpretability
-- Simple implementation
-- A reference point for comparison
-
-
-## Candidate Model: K-Nearest Neighbors Regression
-
-KNN Regression was evaluated because:
-
-- It can capture non-linear relationships
-- It does not assume a predefined functional relationship between variables
-- It benefits from standardized predictors
-
-
----
-
-# Model Performance
-
-Version 2 evaluates two different generalization scenarios. These results are reported separately because the test protocols answer different questions.
-
-## Evaluation protocols
-
-**Temporal evaluation:** Models are trained on observations before 2018 and evaluated on observations from 2018–2022. All 164 countries in the test period also occur in training. This measures performance on later observations for represented countries, not on unseen countries.
-
-**Unseen-country evaluation:** `GroupShuffleSplit` holds out 33 countries for testing and uses 131 countries for training. There is no country overlap. KNN tuning uses five-fold `GroupKFold` cross-validation on the training countries.
-
-Both model families use a scikit-learn pipeline with median imputation, standardization, and the estimator. Preprocessing is fitted within the training data in each cross-validation fold.
-
-## Temporal test results (2018–2022)
-
-| Model | MAE (years) | RMSE (years) | R² |
-|---|---:|---:|---:|
-| Multiple Linear Regression | 2.885 | 3.725 | 0.748 |
-| K-Nearest Neighbors | 1.719 | 2.817 | 0.856 |
-
-KNN performs better on this held-out period. Its forward-chaining cross-validation MAE was 0.821 years, compared with 2.864 years for Linear Regression. The difference between KNN's cross-validation and test errors shows that performance varied across time periods.
-
-## Unseen-country test results
-
-| Model | MAE (years) | RMSE (years) | R² |
-|---|---:|---:|---:|
-| Multiple Linear Regression | 2.769 | 3.500 | 0.791 |
-| K-Nearest Neighbors | 2.705 | 3.469 | 0.795 |
-
-KNN has a slightly lower MAE on the held-out countries. However, the country-grouped cross-validation MAE favors Linear Regression.
-
-## Cross-validation and production model selection
-
-| Evaluation protocol | Model | Cross-validation MAE (years) |
-|---|---|---:|
-| Temporal forward-chaining CV | Multiple Linear Regression | 2.864 |
-| Temporal forward-chaining CV | K-Nearest Neighbors | 0.821 |
-| Country-grouped CV | Multiple Linear Regression | 3.186 |
-| Country-grouped CV | K-Nearest Neighbors | 3.404 |
-
-KNN hyperparameters are selected using mean absolute error. Temporal evaluation uses forward-chaining splits; unseen-country evaluation uses country-grouped folds.
-
-**Production model:** Multiple Linear Regression was selected for v2 because its country-grouped cross-validation MAE (3.186 years) was lower than KNN's (3.404 years). This selection prioritizes generalization to countries excluded from individual training folds; it does not mean Linear Regression is best under every protocol.
-
-## Version 2 artifacts
-
-The training script `src/modeling/train_pipeline.py` saves models, predictions, evaluation tables, and diagnostic figures under the v2 output directories.
-
-The production pipeline is `models/v2/production_pipeline.joblib`. It includes the fitted preprocessing steps and estimator and is retrained on all eligible labelled observations after model selection. Metadata is saved in `models/v2/metadata.json`.
-
-The seven predictors are `obesity_prevalence`, `diabetes_treatment`, `polluting_cooking_fuels`, `hypertension_treatment`, `mean_years_schooling`, `expected_years_schooling`, and `alcohol_consumption`.
-
-## Historical version 1 results
-
-Version 1 reported KNN test metrics of MAE = 0.8343 years, MSE = 2.6129 years², RMSE = 1.6164 years, and R² = 0.9657. These came from a different random train-test split and should not be directly compared with the v2 temporal or country-grouped results.
-
-# Reproducibility
-
-The project follows a modular structure separating:
-
-- Data acquisition and caching (`src/dataset.py`)
-- Dataset harmonization (`src/harmonization.py`)
-- Feature engineering (`src/features.py`)
-- Visualization (`src/plots.py`)
-- Model persistence and versioning (`src/modeling/train.py`)
-- Configuration management (`src/config.py`)
-
-
-This structure allows the complete pipeline to be reproduced without manually downloading or processing datasets.
-
-
----
-
-# Installation
-
-Clone the repository:
+Clone (check the repository URL on GitHub) and create the environment:
 
 ```bash
-git clone https://github.com/ananda-pires/who-life-expectancy_prediction.git
-
-cd who-life-expectancy_prediction
-```
-
-
-Create the environment:
-
-```bash
-conda create -n life_expectancy python=3.12
-
-conda activate life_expectancy
-```
-
-
-Install dependencies:
-
-```bash
-pip install -r requirements.txt
-```
-
-
----
-
-# Running the Project
-
-Launch Jupyter Notebook:
-
-```bash
-jupyter notebook
-```
-
-
-Open:
-
-```text
-notebooks/life_expectancy.ipynb
-```
-
-
-The notebook executes the complete workflow:
-
-1. Dataset loading
-2. Harmonization
-3. Exploratory analysis
-4. Feature preparation
-5. Model training
-6. Evaluation
-7. Model versioning
-
-
----
-
-# Limitations and Future Improvements
-
-Although KNN achieved excellent predictive performance, further validation is recommended.
-
-Future improvements include:
-
-- Country-based validation strategies
-- Temporal validation using future years as test data
-- Hyperparameter optimization
-- Comparison with tree-based algorithms
-- Explainable AI approaches such as SHAP
-
-
----
-
-# Technologies Used
-
-Programming language:
-
-- Python 3.12
-
-
-Main libraries:
-
-- pandas
-- numpy
-- matplotlib
-- scikit-learn
-- statsmodels
-- joblib
-
-
-## FastAPI Prediction Service
-
-### Overview
-
-This project includes a FastAPI service for predicting life expectancy from seven health and socioeconomic indicators derived from the World Health Organization (WHO) Health Inequality Data Repository (HIDR).
-
-The API loads the v2 production pipeline at application startup and reuses it for subsequent predictions. The pipeline performs its own preprocessing, so the API does not apply a separate scaler.
-
-### Model Information
-
-- **Model:** Multiple Linear Regression
-- **Model version:** v2
-- **Target:** `life_expectancy`, measured in years
-- **Input features:**
-  - `obesity_prevalence`
-  - `diabetes_treatment`
-  - `polluting_cooking_fuels`
-  - `hypertension_treatment`
-  - `mean_years_schooling`
-  - `expected_years_schooling`
-  - `alcohol_consumption`
-- **Preprocessing:** median imputation and standardization within the fitted pipeline
-- **Serialization:** Joblib
-- **Model artifact:** `models/v2/production_pipeline.joblib`
-
-The production model was selected using country-grouped cross-validation. On the held-out country test set, Linear Regression achieved MAE = 2.769 years, RMSE = 3.500 years, and R² = 0.791. These are evaluation results, not a guarantee of performance for every prediction.
-
-### Technology Stack
-
-The API uses Python 3.12, FastAPI, Uvicorn, Pydantic v2, scikit-learn, pandas, and Joblib. Exact package versions are specified in `requirements.txt`.
-
-### Installation
-
-From the repository root, create and activate the Conda environment if it does not already exist:
-
-```bash
-conda create -n life_expectancy python=3.12
-conda activate life_expectancy
+git clone https://github.com/ananda-pires/who_life_expectancy_prediction.git
+cd who_life_expectancy_prediction
+python3.12 -m venv .venv
+source .venv/bin/activate
 python -m pip install -r requirements.txt
 ```
 
-If the `life_expectancy` environment already exists, activate it instead of creating it again.
+(With Conda: `conda create -n life_expectancy python=3.12 && conda activate life_expectancy`.)
 
-### Run the API
-
-From the repository root, run:
+**Run the notebook and regenerate the artifact.** The whole workflow (data, split, validation, selection, test, serialization, verification) runs in the notebook:
 
 ```bash
-uvicorn src.api.main:app --reload
+jupyter nbconvert --to notebook --execute --inplace --ExecutePreprocessor.timeout=1800 notebooks/life_expectancy.ipynb
 ```
 
-The development server is available at `http://127.0.0.1:8000`.
+or open `notebooks/life_expectancy.ipynb` in Jupyter and run all cells. This rewrites `models/v2/production_pipeline.joblib`, `metadata.json` and `metrics.json`. Note: it also rewrites derived CSVs in `data/processed/`.
 
-Interactive API documentation is available at `http://127.0.0.1:8000/docs`.
+**Start the API:**
 
-### Endpoints
+```bash
+uvicorn src.api.main:app --port 8000
+```
 
-| Method | Endpoint | Description |
+Interactive Swagger documentation: http://127.0.0.1:8000/docs
+
+This is a **local** run. The service is not published on a public host.
+
+## 6. Training, validation and test strategy
+
+| Step | What is done |
+|---|---|
+| Test (reserved) | Years **2018-2022**, used once, only to evaluate the already selected model |
+| Training | Years **2000-2017** |
+| Validation | **Forward-chaining** folds inside 2000-2017: train on years < S, validate on S..S+1, for S = 2010, 2012, 2014, 2016. Used to compare models and tune KNN (grid over `n_neighbors`, `weights`, `p`) |
+| Selection criterion | Lowest mean validation MAE, defined before looking at the test set |
+| Leakage prevention | Imputation and scaling live inside the Pipeline and are fitted only on training data of each fold; split by the **value** of the year; no future data in training; seed 42 |
+
+### Main protocol - temporal results
+
+Validation (mean over forward-chaining folds, 2000-2017):
+
+| Model | MAE (years) | RMSE (years) | R² |
+|---|---:|---:|---:|
+| Linear Regression | 2.864 | 3.819 | 0.774 |
+| **KNN (selected)** | **0.821** | 1.230 | 0.976 |
+
+Final test, 2018-2022 (selected KNN):
+
+| MAE (years) | MSE (years²) | RMSE (years) | R² |
+|---:|---:|---:|---:|
+| 1.719 | 7.935 | 2.817 | 0.856 |
+
+The gap between validation MAE (0.82) and test MAE (1.72) shows that the test period is harder; it includes 2020-2022 (COVID-19). Training-set metrics are not reported: KNN with distance weighting reproduces training targets exactly and says nothing about generalization.
+
+### Complementary analysis - unseen countries (does NOT affect selection)
+
+20% of countries held out with `GroupShuffleSplit` (seed 42); tuning with 5-fold `GroupKFold` on the training countries.
+
+| Model | Test MAE | Test MSE | Test RMSE | Test R² | Grouped CV MAE |
+|---|---:|---:|---:|---:|---:|
+| Linear Regression | 2.769 | 12.250 | 3.500 | 0.791 | 3.186 |
+| KNN | 2.705 | 12.033 | 3.469 | 0.795 | 3.404 |
+
+On new countries both models are practically tied and clearly worse than in the temporal scenario. Do not compare these two tables as if they answered the same question.
+
+### Historical version 1
+
+Version 1 reported KNN MAE 0.834 with a random row split. Rows from the same country appear in both train and test, so it is optimistic and **not comparable** with the results above.
+
+## 7. API
+
+| Method | Path | Description |
 |---|---|---|
-| GET | `/health` | Reports API status and whether the model is loaded |
-| POST | `/predict` | Validates input features and predicts life expectancy |
+| GET | `/health` | 200 when the model is loaded; 503 otherwise |
+| POST | `/predict` | Validates the body, returns the prediction |
 
-The prediction endpoint validates requests with Pydantic. Percentage indicators must be between 0 and 100, schooling indicators between 0 and 30 years, and alcohol consumption between 0 and 50. Requests with invalid types, missing fields, extra fields, or out-of-range values are rejected with HTTP 422.
+The model is loaded **once per process** at startup via `lifespan` (`@asynccontextmanager`), before requests are accepted, and is never read from disk inside a route. With several workers or instances, each process loads its own copy. If the artifact is missing or corrupted, the error is logged, the app starts in degraded mode and answers 503.
 
-If the model is unavailable, the prediction endpoint returns HTTP 503.
+### Valid request
 
-### Example Request
-
-Send a POST request to `/predict` with the following JSON body:
-
-```json
-{
-  "obesity_prevalence": 25.0,
-  "diabetes_treatment": 60.0,
-  "polluting_cooking_fuels": 10.0,
-  "hypertension_treatment": 45.0,
-  "mean_years_schooling": 8.5,
-  "expected_years_schooling": 12.0,
-  "alcohol_consumption": 6.0
-}
+```bash
+curl -X POST http://127.0.0.1:8000/predict -H "Content-Type: application/json" -d '{"obesity_prevalence":25,"diabetes_treatment":60,"polluting_cooking_fuels":10,"hypertension_treatment":45,"mean_years_schooling":8.5,"expected_years_schooling":12,"alcohol_consumption":6}'
 ```
 
-Example response:
-
 ```json
-{
-  "prediction": 76.09074810957026,
-  "target": "life_expectancy",
-  "model_version": "v2"
-}
+{"prediction":71.6558202815022,"target":"life_expectancy","model_name":"KNN","model_version":"v2"}
 ```
 
-The response above corresponds to a local test request. Predictions depend on the supplied input values.
+`GET /health` -> 200:
 
-### API Project Architecture
+```json
+{"status":"ok","model_loaded":true,"model_name":"KNN","model_version":"v2"}
+```
 
-- `src/api/main.py`: creates the FastAPI application and manages model loading through the lifespan context manager.
-- `src/api/schemas.py`: defines Pydantic request and response schemas and input constraints.
-- `src/api/services.py`: loads the model artifacts and performs preprocessing and inference.
-- `src/api/routers.py`: defines the health-check and prediction endpoints.
-- `src/config.py`: defines project paths used by the training pipeline.
-- `models/v2/production_pipeline.joblib`: contains the serialized preprocessing and prediction pipeline loaded by the API.
-- `models/v2/metadata.json`: records the production model version, features, training data path, and selection metadata.
+### Error responses
 
-### Validation and Testing
+All errors share one format: `{"error": {"code", "message", "details"?}}`. No stack traces or internal paths are exposed.
 
-The API was tested locally with the following checks:
+| Status | When | Source |
+|---|---|---|
+| 200 | Valid request | executed with curl |
+| 400 | Malformed JSON (syntax error) | executed with curl |
+| 422 | Valid JSON that violates the schema (wrong type, out of range, missing or extra field) | executed with curl |
+| 500 | Unexpected failure during inference | automated tests (simulated) |
+| 503 | Model unavailable (`/predict` and `/health`) | automated tests (simulated) |
 
-- Health endpoint returns HTTP 200 and confirms that the model is loaded.
-- A valid prediction request returns HTTP 200 with a prediction.
-- An obesity prevalence value above 100 returns HTTP 422.
+**400** - body `{"obesity_prevalence":"abc"` (truncated JSON):
 
-### Demo Video
+```json
+{"error":{"code":"malformed_json","message":"The request body is not valid JSON.","details":[{"how_to_fix":"Send a syntactically valid JSON object."}]}}
+```
+
+**422** - `obesity_prevalence: 150` plus an extra field `country`:
+
+```json
+{"error":{"code":"validation_error","message":"The request body does not match the expected schema.","details":[{"field":"obesity_prevalence","rule":"value is above the allowed maximum","how_to_fix":"Use a value inside the expected range.","expected":"number between 0 and 100 (%)"},{"field":"country","rule":"field is not accepted","how_to_fix":"Remove this field; only the seven documented predictors are allowed."}]}}
+```
+
+**500** (unexpected exception, generic message, details only in server logs):
+
+```json
+{"error":{"code":"internal_error","message":"An unexpected error occurred."}}
+```
+
+**503** (`/predict` without model):
+
+```json
+{"error":{"code":"http_error","message":"The prediction model is not available."}}
+```
+
+`GET /health` without model returns status 503 with `{"status":"unavailable","model_loaded":false,...}`.
+
+Rule: syntactically invalid JSON -> 400; valid JSON that violates the schema -> 422. Validation itself is done by Pydantic (`strict=True`, `extra="forbid"`, `Field` constraints, no NaN/inf).
+
+## 8. Tests
+
+```bash
+python -m pytest -q
+```
+
+26 tests: startup, model loaded once (no reload per request), `/health`, valid prediction, 400, 422 (text in numeric field, out of range, missing, extra), simulated 500 and 503, degraded startup without artifact, artifact/API feature compatibility, temporal splits without future data, imputer fitted on training data only. Last run: **26 passed**. The notebook-based training itself is verified by running it end to end (Section 5) and by the artifact and metrics-report tests.
+
+## 9. Known limitations
+
+- The main protocol uses countries already seen in training: it measures forecasting for known countries in later years, not new countries (see the complementary analysis).
+- 2020-2022 (COVID-19) are in the test set and may inflate errors.
+- A single temporal cut (2018) is used.
+- Several predictors have 15-19% missing values, filled with the training median.
+- The API receives no country or year, so it cannot use country-specific information.
+- Validation ranges are operational limits, not WHO rules; extreme but real values may be rejected.
+- Associations are statistical, not causal. Not for clinical or policy decisions.
+
+## 10. Demo video
 
 **Video link:** https://drive.google.com/drive/folders/1Q-jTRzOH1ysMdWZKhdU_COdw0zjCZZg6?usp=drive_link
 
@@ -530,10 +212,7 @@ The API was tested locally with the following checks:
 
 # License
 
-This project is licensed under the MIT License.
-
-See the [LICENSE](LICENSE) file for details.
-
+This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
 
 ---
 
@@ -541,5 +220,4 @@ See the [LICENSE](LICENSE) file for details.
 
 Ananda Christina Staats Pires
 
-Machine Learning Project
-WHO Health Inequality Data Repository (HIDR)
+Machine Learning Project - WHO Health Inequality Data Repository (HIDR)
