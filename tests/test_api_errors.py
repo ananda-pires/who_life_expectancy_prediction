@@ -29,9 +29,11 @@ def test_model_loaded_once_and_not_reloaded_per_request():
 
 
 def test_lifespan_stores_model_and_name():
+    import json
+    expected = json.loads(services.METADATA_FILE.read_text(encoding="utf-8"))["production_model"]
     with TestClient(app) as client:
         assert client.app.state.model is not None
-        assert client.app.state.model_name in {"KNN", "Linear Regression", "linear_regression", "knn"} or client.app.state.model_name
+        assert client.app.state.model_name == expected
 
 
 def test_health_ok_has_model_name():
