@@ -98,7 +98,7 @@ Validation (mean over forward-chaining folds, 2000-2017):
 | Linear Regression | 2.864 | 3.819 | 0.774 |
 | **KNN (selected)** | **0.821** | 1.230 | 0.976 |
 
-Final test, 2018-2022 (selected KNN):
+Final test, 2018-2022 (selected KNN). All 164 test countries also appear in the training period (164 of 164):
 
 | MAE (years) | MSE (years²) | RMSE (years) | R² |
 |---:|---:|---:|---:|
