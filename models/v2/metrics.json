@@ -1,0 +1,61 @@
+{
+  "model_version": "v2",
+  "main_protocol": "temporal",
+  "train_period": [
+    2000,
+    2017
+  ],
+  "test_period": [
+    2018,
+    2022
+  ],
+  "selected_model": "KNN",
+  "selected_hyperparameters": {
+    "n_neighbors": 3,
+    "p": 1,
+    "weights": "distance"
+  },
+  "selection_criterion": "lowest mean MAE across forward-chaining validation folds",
+  "validation_forward_chaining": {
+    "Linear Regression": {
+      "CV MAE (years)": 2.864405262843489,
+      "CV RMSE (years)": 3.8189676939097197,
+      "CV R2": 0.7744688193762782
+    },
+    "KNN": {
+      "CV MAE (years)": 0.8207589343833432,
+      "CV RMSE (years)": 1.2303800950018329,
+      "CV R2": 0.9762310207786122
+    }
+  },
+  "temporal_metrics": {
+    "Test (2018-2022)": {
+      "MAE": 1.7193647386582454,
+      "MSE": 7.935015125650127,
+      "RMSE": 2.8169158889910304,
+      "R2": 0.8560759881996891
+    }
+  },
+  "complementary_unseen_countries": {
+    "Linear Regression": {
+      "MAE": 2.7694802780810335,
+      "MSE": 12.249542069904413,
+      "RMSE": 3.4999345808035347,
+      "R2": 0.7912974259916401,
+      "CV MAE": 3.1864720663367656
+    },
+    "KNN": {
+      "MAE": 2.704978740772573,
+      "MSE": 12.033176327952454,
+      "RMSE": 3.4688869004267713,
+      "R2": 0.7949837750008446,
+      "CV MAE": 3.4042210494476897
+    }
+  },
+  "units": {
+    "MAE": "years",
+    "RMSE": "years",
+    "MSE": "years squared",
+    "R2": "unitless"
+  }
+}
